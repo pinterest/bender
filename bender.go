@@ -103,7 +103,7 @@ func LoadTestConcurrency(starts chan int64, requests chan *Request, requestExec 
 
 	go func() {
 		for n := range starts {
-			for i := 0; i < n; i++ {
+			for i := int64(0); i < n; i++ {
 				permits <- true
 			}
 		}
