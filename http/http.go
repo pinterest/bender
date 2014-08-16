@@ -1,13 +1,14 @@
-package bender
+package http
 
 import (
 	"net/http"
 	"io"
+	"github.com/Pinterest/bender"
 )
 
 type HttpBodyHandler func(*io.ReadCloser) error
 
-func CreateHttpExecutor(tr *http.Transport, client *http.Client, bodyHandler HttpBodyHandler) RequestExecutor {
+func CreateHttpExecutor(tr *http.Transport, client *http.Client, bodyHandler HttpBodyHandler) bender.RequestExecutor {
 	if tr == nil {
 		tr = &http.Transport{}
 		client = &http.Client{Transport: tr}

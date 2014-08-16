@@ -15,47 +15,47 @@ type Request struct {
 type RequestExecutor func(int64, *Request) error
 
 type StartMsg struct {
-	t int64
+	Start int64
 }
 
 func (m StartMsg) String() string {
-	return fmt.Sprintf("StartMsg{time=%d}", m.t)
+	return fmt.Sprintf("StartMsg{start=%d}", m.Start)
 }
 
 type EndMsg struct {
-	s, t int64
+	Start, End int64
 }
 
 func (m EndMsg) String() string {
-	return fmt.Sprintf("EndMsg{start=%d,end=%d}", m.s, m.t)
+	return fmt.Sprintf("EndMsg{start=%d,end=%d}", m.Start, m.End)
 }
 
 type WaitMsg struct {
-	w, o int64
+	Wait, Overage int64
 }
 
 func (m WaitMsg) String() string {
-	return fmt.Sprintf("WaitMsg{wait=%d,overage=%d}", m.w, m.o)
+	return fmt.Sprintf("WaitMsg{wait=%d,overage=%d}", m.Wait, m.Overage)
 }
 
 type StartRequestMsg struct {
-	s, rid int64
+	Start, Rid int64
 }
 
 func (m StartRequestMsg) String() string {
-	return fmt.Sprintf("StartRequestMsg{start=%d,requestId=%d}", m.s, m.rid)
+	return fmt.Sprintf("StartRequestMsg{start=%d,requestId=%d}", m.Start, m.Rid)
 }
 
 type EndRequestMsg struct {
-	s, t, rid int64
-	err       error
+	Start, End, Rid int64
+	Err       error
 }
 
 func (m EndRequestMsg) String() string {
-	return fmt.Sprintf("EndRequestMsg{start=%d,end=%d,requestId=%d,error=%s}", m.s, m.t, m.rid, m.err)
+	return fmt.Sprintf("EndRequestMsg{start=%d,end=%d,requestId=%d,error=%s}", m.Start, m.End, m.Rid, m.Err)
 }
 
-func Bender(intervals chan int64, requests chan *Request, requestExec RequestExecutor) chan interface{} {
+func LoadTestThroughput(intervals chan int64, requests chan *Request, requestExec RequestExecutor) chan interface{} {
 	reporter := make(chan interface{})
 
 	go func() {
@@ -67,7 +67,11 @@ func Bender(intervals chan int64, requests chan *Request, requestExec RequestExe
 		for request := range requests {
 			overageStart := time.Now().UnixNano()
 
-			wait := <-intervals
+			wait, more := <-intervals
+			if !more {
+				break
+			}
+
 			adjust := int64(math.Min(float64(wait), float64(overage)))
 			wait -= adjust
 			overage -= adjust
@@ -85,6 +89,49 @@ func Bender(intervals chan int64, requests chan *Request, requestExec RequestExe
 
 			overage += time.Now().UnixNano() - overageStart - wait
 		}
+		wg.Wait()
+		reporter <- EndMsg{start, time.Now().UnixNano()}
+		close(reporter)
+	}()
+
+	return reporter
+}
+
+func LoadTestConcurrency(starts chan int64, requests chan *Request, requestExec RequestExecutor) chan interface{} {
+	reporter := make(chan interface{})
+	permits := make(chan bool)
+
+	go func() {
+		for n := range starts {
+			for i := 0; i < n; i++ {
+				permits <- true
+			}
+		}
+		close(permits)
+	}()
+
+	go func() {
+		start := time.Now().UnixNano()
+		reporter <- StartMsg{start}
+
+		var wg sync.WaitGroup
+		for request := range requests {
+			<-permits
+
+			wg.Add(1)
+			go func(req *Request) {
+				defer func() {
+					wg.Done()
+					permits <- true
+				}()
+
+				reqStart := time.Now().UnixNano()
+				reporter <- StartRequestMsg{start, request.Rid}
+				err := requestExec(time.Now().UnixNano(), req)
+				reporter <- EndRequestMsg{reqStart, time.Now().UnixNano(), request.Rid, err}
+			}(request)
+		}
+
 		wg.Wait()
 		reporter <- EndMsg{start, time.Now().UnixNano()}
 		close(reporter)

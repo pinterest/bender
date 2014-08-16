@@ -16,7 +16,7 @@ func ExponentialIntervals(rate float64) chan int64 {
 	return c
 }
 
-func ConstantIntervals(rate float64) chan int64 {
+func UniformIntervals(rate float64) chan int64 {
 	rate = rate / float64(time.Second)
 	c := make(chan int64, 2)
 	go func() {

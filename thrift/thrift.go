@@ -1,16 +1,17 @@
-package bender
+package thrift
 
 import (
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"bytes"
+	"github.com/Pinterest/bender"
 )
 
-type ThriftClientExecutor func(*Request, thrift.TTransport) error
+type ThriftClientExecutor func(*bender.Request, thrift.TTransport) error
 
-func NewThriftRequestExec(tFac thrift.TTransportFactory, clientExec ThriftClientExecutor) RequestExecutor {
-	addr := "asterix-staging001:3636"
+func NewThriftRequestExec(tFac thrift.TTransportFactory, clientExec ThriftClientExecutor) bender.RequestExecutor {
+	addr := "localhost:3636"
 
-	return func(_ int64, request *Request) error {
+	return func(_ int64, request *bender.Request) error {
 		socket, err := thrift.NewTSocket(addr)
 		if err != nil {
 			return err
