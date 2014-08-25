@@ -11,8 +11,8 @@ update this README when it is ready. Until then, expect huge changes in the API!
 
 The easiest way to get started with Bender is to use one of the tutorials:
 
-* [Thrift](http://github.com/Pinterest/bender/thrift/TUTORIAL.md)
-* [HTTP](http://github.com/Pinterest/bender/http/TUTORIAL.md)
+* [Thrift](https://github.com/pinterest/bender/blob/master/thrift/TUTORIAL.md)
+* [HTTP](https://github.com/pinterest/bender/blob/master/http/TUTORIAL.md)
 
 The rest of this document discusses the design of Bender, the core library functions and how they
 can be extended. It also briefly covers the differences between Bender and other load testing
@@ -51,10 +51,10 @@ averages and other statistics for each run.
 
 The `LoadTestThroughput` function takes three arguments:
 
-1. A `chan int` that provides successive intervals in nanoseconds. The inner loop reads the next
-interval from this channel, sleeps for that duration and then sends the next request. If this 
-channel is closed, the inner loop will shutdown, no new requests will be executed and the currently
-running requests are waited on.
+1. A `IntervalGenerator`, which is a function that returns an interval in nanoseconds (given the
+current time in nanoseconds). The inner loop calls this to get the next interval, sleeps for that
+duration and then sends the next request. The sleep works at the resolution allowed by the operating
+system and hardware, which is typically on the order of microseconds.
 2. A `chan *Request` that provides requests to be executed. The `Request` struct contains an integer
 ID, which identifies the request through the pipeline (this can be anything, even a random number,
 as long as it uniquely identifies the request), and a request, which is an `interface{}` and can
@@ -64,7 +64,7 @@ requests will be executed and the currently running requests are waited on.
 3. A function that takes a `*Request` and returns an `error`. This is the execution function, which
 will be used by the inner loop to execute requests in a goroutine (which will also include code to
 time the request and report the results). This function takes the most recent `*Request` from the
-request channel and returns `nil` if there was no error, and an `error` otherwise.
+request channel and returns `nil` if there was no error, and an `error` value otherwise.
 
 The `LoadTestThroughput` function returns a `chan interface{}` which is used to send event messages.
 The following messages are sent:
@@ -89,4 +89,19 @@ are sending too much load for the computer on which the load tester is running.
 
 ## LoadTestConcurrency
 
-TBD
+The `LoadTestConcurrency` function takes three arguments:
+
+1. A `*WorkerSemaphore`, which is used to control the number of goroutines that can be used to
+execute requests. The caller can add more workers, or remove idle workers at any point during the
+execution of the load test. This makes it easy to ramp up workers slowly, for example, and provides
+relatively fine-grained control over how much concurrency you are testing. You could even use the
+data from the output channel to control the concurrency rate based on throughput and latency, for
+instance.
+2. A `chan *Request` that provides requests to be executed. See the notes in `LoadTestThroughput`
+for details on how this channel is used.
+3. A function that takes a `*Request` and returns an `error`. See the notes in `LoadTestThroughput`
+for details on how this function is used.
+
+The `LoadTestConcurrency` function returns a `chan interface{}` that has the same messages as that
+returned by `LoadTestThroughput` except that `WaitMsg` is never sent (requests are executed as soon
+as workers are available, so there is no explicit waiting).

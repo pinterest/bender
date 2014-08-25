@@ -80,6 +80,12 @@ func LoadTestThroughput(intervals IntervalGenerator, requests chan *Request, req
 			go func(req *Request) {
 				defer wg.Done()
 				reqStart := time.Now().UnixNano()
+				// TODO(charles): this can block waiting for the recorder, in which case we will
+				// count the time against the service, which isn't right. How to make this not
+				// block? Create a buffered channel with a really large buffer? Can we make the
+				// buffer infinite? Is that wise? Maybe we send Start and End together, after the
+				// request is finished? At that point, maybe just send a single message for each
+				// request?
 				reporter <- &StartRequestMsg{start, request.Rid}
 				err := requestExec(time.Now().UnixNano(), req)
 				reporter <- &EndRequestMsg{reqStart, time.Now().UnixNano(), request.Rid, err}
