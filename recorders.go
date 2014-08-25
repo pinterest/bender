@@ -17,15 +17,15 @@ func Record(c chan interface{}, recorders... Recorder) {
 
 func logMessage(l *log.Logger, msg interface{}) {
 	switch msg := msg.(type) {
-	case StartMsg:
+	case *StartMsg:
 		l.Printf("Start time:%d\n", msg.Start)
-	case EndMsg:
+	case *EndMsg:
 		l.Printf("End start:%d end:%d\n", msg.Start, msg.End)
-	case WaitMsg:
+	case *WaitMsg:
 		l.Printf("Wait duration:%d overage:%d\n", msg.Wait, msg.Overage)
-	case StartRequestMsg:
+	case *StartRequestMsg:
 		l.Printf("StartRequest time:%d, rid:%d\n", msg.Start, msg.Rid)
-	case EndRequestMsg:
+	case *EndRequestMsg:
 		if msg.Err == nil {
 			l.Printf("EndRequest start:%d end:%d duration:%d rid:%d\n", msg.Start, msg.End, msg.End-msg.Start, msg.Rid)
 		} else {
@@ -42,18 +42,13 @@ func NewLoggingRecorder(l *log.Logger) Recorder {
 	}
 }
 
-func NewHistogramRecorder(max int, c chan *hist.Histogram) Recorder {
-	h := hist.NewHistogram(max)
-
+func NewHistogramRecorder(h *hist.Histogram) Recorder {
 	return func(msg interface{}) {
 		switch msg := msg.(type) {
-		case EndRequestMsg:
+		case *EndRequestMsg:
 			if msg.Err == nil {
 				h.Add(int(msg.End - msg.Start))
 			}
-		case EndMsg:
-			c <- h
-			close(c)
 		}
 	}
 }

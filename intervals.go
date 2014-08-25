@@ -5,25 +5,17 @@ import (
 	"math/rand"
 )
 
-func ExponentialIntervals(rate float64) chan int64 {
+func ExponentialIntervalGenerator(rate float64) IntervalGenerator {
 	rate = rate / float64(time.Second)
-	c := make(chan int64, 2)
-	go func() {
-		for {
-			c <- int64(rand.ExpFloat64() / rate)
-		}
-	}()
-	return c
+	return func(_ int64) int64 {
+		return int64(rand.ExpFloat64() / rate)
+	}
 }
 
-func UniformIntervals(rate float64) chan int64 {
-	rate = rate / float64(time.Second)
-	c := make(chan int64, 2)
-	go func() {
-		for {
-			c <- int64(rate)
-		}
-	}()
-	return c
+func UniformIntervalGenerator(rate float64) IntervalGenerator {
+	irate := int64(rate / float64(time.Second))
+	return func(_ int64) int64 {
+		return irate
+	}
 }
 

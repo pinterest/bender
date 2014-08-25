@@ -7,6 +7,8 @@ import (
 	"fmt"
 )
 
+type IntervalGenerator func(int64) int64
+
 type Request struct {
 	Rid int64
 	Request interface{}
@@ -55,85 +57,94 @@ func (m EndRequestMsg) String() string {
 	return fmt.Sprintf("EndRequestMsg{start=%d,end=%d,requestId=%d,error=%s}", m.Start, m.End, m.Rid, m.Err)
 }
 
-func LoadTestThroughput(intervals chan int64, requests chan *Request, requestExec RequestExecutor) chan interface{} {
+func LoadTestThroughput(intervals IntervalGenerator, requests chan *Request, requestExec RequestExecutor) chan interface{} {
 	reporter := make(chan interface{})
 
 	go func() {
 		start := time.Now().UnixNano()
-		reporter <- StartMsg{start}
+		reporter <- &StartMsg{start}
 
 		var wg sync.WaitGroup
 		var overage int64
 		for request := range requests {
 			overageStart := time.Now().UnixNano()
 
-			wait, more := <-intervals
-			if !more {
-				break
-			}
-
+			wait := intervals(overageStart)
 			adjust := int64(math.Min(float64(wait), float64(overage)))
 			wait -= adjust
 			overage -= adjust
-			reporter <- WaitMsg{wait, overage}
+			reporter <- &WaitMsg{wait, overage}
 			time.Sleep(time.Duration(wait))
 
 			wg.Add(1)
 			go func(req *Request) {
 				defer wg.Done()
 				reqStart := time.Now().UnixNano()
-				reporter <- StartRequestMsg{start, request.Rid}
+				reporter <- &StartRequestMsg{start, request.Rid}
 				err := requestExec(time.Now().UnixNano(), req)
-				reporter <- EndRequestMsg{reqStart, time.Now().UnixNano(), request.Rid, err}
+				reporter <- &EndRequestMsg{reqStart, time.Now().UnixNano(), request.Rid, err}
 			}(request)
 
 			overage += time.Now().UnixNano() - overageStart - wait
 		}
 		wg.Wait()
-		reporter <- EndMsg{start, time.Now().UnixNano()}
+		reporter <- &EndMsg{start, time.Now().UnixNano()}
 		close(reporter)
 	}()
 
 	return reporter
 }
 
-func LoadTestConcurrency(starts chan int64, requests chan *Request, requestExec RequestExecutor) chan interface{} {
-	reporter := make(chan interface{})
-	permits := make(chan bool)
+type empty struct{}
+type WorkerSemaphore struct {
+	permits chan empty
+}
 
-	go func() {
-		for n := range starts {
-			for i := int64(0); i < n; i++ {
-				permits <- true
-			}
-		}
-		close(permits)
-	}()
+func NewWorkerSemaphore() *WorkerSemaphore {
+	return &WorkerSemaphore{permits:make(chan empty)}
+}
+
+func (s WorkerSemaphore) Signal(n int) {
+	e := empty{}
+	for i := 0; i < n; i++ {
+		s.permits <- e
+	}
+}
+
+func (s WorkerSemaphore) Wait(n int) bool {
+	for i := 0; i < n; i++ {
+		<-s.permits
+	}
+	return true
+}
+
+func LoadTestConcurrency(workers *WorkerSemaphore, requests chan *Request, requestExec RequestExecutor) chan interface{} {
+	reporter := make(chan interface{})
 
 	go func() {
 		start := time.Now().UnixNano()
-		reporter <- StartMsg{start}
+		reporter <- &StartMsg{start}
 
 		var wg sync.WaitGroup
 		for request := range requests {
-			<-permits
+			workers.Wait(1)
 
 			wg.Add(1)
 			go func(req *Request) {
 				defer func() {
 					wg.Done()
-					permits <- true
+					workers.Signal(1)
 				}()
 
 				reqStart := time.Now().UnixNano()
-				reporter <- StartRequestMsg{start, request.Rid}
+				reporter <- &StartRequestMsg{start, request.Rid}
 				err := requestExec(time.Now().UnixNano(), req)
-				reporter <- EndRequestMsg{reqStart, time.Now().UnixNano(), request.Rid, err}
+				reporter <- &EndRequestMsg{reqStart, time.Now().UnixNano(), request.Rid, err}
 			}(request)
 		}
 
 		wg.Wait()
-		reporter <- EndMsg{start, time.Now().UnixNano()}
+		reporter <- &EndMsg{start, time.Now().UnixNano()}
 		close(reporter)
 	}()
 

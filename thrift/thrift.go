@@ -4,14 +4,14 @@ import (
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"bytes"
 	"github.com/Pinterest/bender"
+	"math/rand"
 )
 
 type ThriftClientExecutor func(*bender.Request, thrift.TTransport) error
 
-func NewThriftRequestExec(tFac thrift.TTransportFactory, clientExec ThriftClientExecutor) bender.RequestExecutor {
-	addr := "localhost:3636"
-
+func NewThriftRequestExec(tFac thrift.TTransportFactory, clientExec ThriftClientExecutor, hosts... string) bender.RequestExecutor {
 	return func(_ int64, request *bender.Request) error {
+		addr := hosts[rand.Intn(len(hosts))]
 		socket, err := thrift.NewTSocket(addr)
 		if err != nil {
 			return err

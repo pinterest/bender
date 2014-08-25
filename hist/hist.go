@@ -7,17 +7,19 @@ import (
 )
 
 type Histogram struct {
+	scale int
 	max int
 	n int
 	total int
 	values []int
 }
 
-func NewHistogram(max int) *Histogram {
-	return &Histogram{max, 0, 0, make([]int, max + 1)}
+func NewHistogram(max int, scale int) *Histogram {
+	return &Histogram{scale, max, 0, 0, make([]int, max + 1)}
 }
 
 func (h *Histogram) Add(v int) {
+	v = int(float64(v) / float64(h.scale))
 	if v < 1 {
 		h.values[0]++
 	} else if v >= h.max {

@@ -1,10 +1,24 @@
 bender
 ======
 
+Bender is a library for building load testing programs. It currently has support and documentation
+for Thrift and Http, but can be extended to support any protocol.
+
 *WARNING:* this library is not ready for production. We are busy "dogfooding" it right now, and will
 update this README when it is ready. Until then, expect huge changes in the API!
 
-## Overview
+## Getting Started
+
+The easiest way to get started with Bender is to use one of the tutorials:
+
+* [Thrift](http://github.com/Pinterest/bender/thrift/TUTORIAL.md)
+* [HTTP](http://github.com/Pinterest/bender/http/TUTORIAL.md)
+
+The rest of this document discusses the design of Bender, the core library functions and how they
+can be extended. It also briefly covers the differences between Bender and other load testing
+libraries and programs, and why/when you would want to use Bender.
+
+## Design
 
 Bender is a [Go](http://golang.org) library that makes it easy to build load testers for any kind
 of service over just about any protocol. The core of the library supports two different approaches
@@ -25,22 +39,13 @@ uses the same approach as `LoadTestThroughput`. We found Iago challenging to use
 it relies heavily on the Twitter Finagle libraries, which require a lot of dependencies. Bender, on
 the other hand, just relies on Go's built-in goroutines, requires significantly less code and
 configuration, and produces much smaller binaries. It is just as easy to build load testers and,
-in our opinion, even easier to extend with your own code.
+in our opinion, even easier to extend them with your own code.
 
-This library is structured around two core primitives, `LoadTestThroughput` and `LoadTestConcurrency`
+This library is structured around two primitives, `LoadTestThroughput` and `LoadTestConcurrency`,
 which are described below. In addition, the library provides convenience functions for building
 load testers that use the Thrift or HTTP protocol (more to come in the future). Finally, the library
 includes tools for logging events and times, as well as basic histograms for viewing percentiles,
 averages and other statistics for each run.
-
-## Getting Started
-
-The rest of this document contains details on how Bender is implemented, and what facilities it
-provides. That is most useful when you want more direct control over your load testing application.
-If you just want to get started quickly with a Thrift or Http service, follow one of these
-tutorials:
-
-*TBD*
 
 ## LoadTestThroughput
 
