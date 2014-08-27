@@ -6,6 +6,8 @@ import (
 	"errors"
 )
 
+type Request struct{}
+
 func assertMessages(t *testing.T, cr chan interface{}, expected_msgs... interface{}) {
 	for _, msg := range expected_msgs {
 		actual_msg, ok := <-cr
@@ -20,20 +22,20 @@ func assertMessages(t *testing.T, cr chan interface{}, expected_msgs... interfac
 		}
 
 		switch m := actual_msg.(type) {
-		case *EndRequestMsg:
-			if m.Err != nil && msg.(*EndRequestMsg).Err == nil {
-				t.Errorf("Expected EndRequestMsg with no error (%s), but got EndRequestMsg with an error (%s)", msg, m)
+		case *EndRequestEvent:
+			if m.Err != nil && msg.(*EndRequestEvent).Err == nil {
+				t.Errorf("Expected EndRequestEvent with no error (%s), but got EndRequestEvent with an error (%s)", msg, m)
 			}
 
-			if m.Err == nil && msg.(*EndRequestMsg).Err != nil {
-				t.Errorf("Expected EndRequestMsg with an error (%s), but got EndRequestMsg with no error (%s)", msg, m)
+			if m.Err == nil && msg.(*EndRequestEvent).Err != nil {
+				t.Errorf("Expected EndRequestEvent with an error (%s), but got EndRequestEvent with no error (%s)", msg, m)
 			}
 		}
 	}
 }
 
-func requests(rs... *Request) chan *Request {
-	c := make(chan *Request)
+func requests(rs... interface{}) chan interface{} {
+	c := make(chan interface{})
 	go func() {
 		for _, r := range rs {
 			c <- r
@@ -51,40 +53,46 @@ func workers(n int) *WorkerSemaphore {
 	return s
 }
 
-func noOpExec(int64, *Request) error {
-	return nil
+func noOpExec(int64, interface{}) (interface{}, error) {
+	return nil, nil
 }
 
-func errorExec(int64, *Request) error {
-	return errors.New("fake error")
+func errorExec(int64, interface{}) (interface{}, error) {
+	return nil, errors.New("fake error")
 }
 
 func TestLoadTestThroughputNoRequests(t *testing.T) {
-	cr := LoadTestThroughput(UniformIntervalGenerator(0), requests(), noOpExec)
-	assertMessages(t, cr, &StartMsg{}, &EndMsg{})
+	cr := make(chan interface{})
+	LoadTestThroughput(UniformIntervalGenerator(0), requests(), noOpExec, cr)
+	assertMessages(t, cr, &StartEvent{}, &EndEvent{})
 }
 
 func TestLoadTestThroughputOneSuccess(t *testing.T) {
-	cr := LoadTestThroughput(UniformIntervalGenerator(0), requests(&Request{}), noOpExec)
-	assertMessages(t, cr, &StartMsg{}, &WaitMsg{}, &StartRequestMsg{}, &EndRequestMsg{}, &EndMsg{})
+	cr := make(chan interface{})
+	LoadTestThroughput(UniformIntervalGenerator(0), requests(Request{}), noOpExec, cr)
+	assertMessages(t, cr, &StartEvent{}, &WaitEvent{}, &StartRequestEvent{}, &EndRequestEvent{}, &EndEvent{})
 }
 
 func TestLoadTestThroughputOneError(t *testing.T) {
-	cr := LoadTestThroughput(UniformIntervalGenerator(0), requests(&Request{}), errorExec)
-	assertMessages(t, cr, &StartMsg{}, &WaitMsg{}, &StartRequestMsg{}, &EndRequestMsg{Err:errors.New("foo")}, &EndMsg{})
+	cr := make(chan interface{})
+	LoadTestThroughput(UniformIntervalGenerator(0), requests(Request{}), errorExec, cr)
+	assertMessages(t, cr, &StartEvent{}, &WaitEvent{}, &StartRequestEvent{}, &EndRequestEvent{Err:errors.New("foo")}, &EndEvent{})
 }
 
 func TestLoadTestConcurrencyNoRequests(t *testing.T) {
-	cr := LoadTestConcurrency(workers(1), requests(), noOpExec)
-	assertMessages(t, cr, &StartMsg{}, &EndMsg{})
+	cr := make(chan interface{})
+	LoadTestConcurrency(workers(1), requests(), noOpExec, cr)
+	assertMessages(t, cr, &StartEvent{}, &EndEvent{})
 }
 
 func TestLoadTestConcurrencyOneSuccess(t *testing.T) {
-	cr := LoadTestConcurrency(workers(1), requests(&Request{}), noOpExec)
-	assertMessages(t, cr, &StartMsg{}, &StartRequestMsg{}, &EndRequestMsg{}, &EndMsg{})
+	cr := make(chan interface{})
+	LoadTestConcurrency(workers(1), requests(Request{}), noOpExec, cr)
+	assertMessages(t, cr, &StartEvent{}, &StartRequestEvent{}, &EndRequestEvent{}, &EndEvent{})
 }
 
 func TestLoadTestConcurrencyOneError(t *testing.T) {
-	cr := LoadTestConcurrency(workers(1), requests(&Request{}), errorExec)
-	assertMessages(t, cr, &StartMsg{}, &StartRequestMsg{}, &EndRequestMsg{Err:errors.New("foo")}, &EndMsg{})
+	cr := make(chan interface{})
+	LoadTestConcurrency(workers(1), requests(Request{}), errorExec, cr)
+	assertMessages(t, cr, &StartEvent{}, &StartRequestEvent{}, &EndRequestEvent{Err:errors.New("foo")}, &EndEvent{})
 }

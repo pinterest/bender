@@ -4,65 +4,56 @@ import (
 	"math"
 	"sync"
 	"time"
-	"fmt"
 )
 
 type IntervalGenerator func(int64) int64
 
-type Request struct {
-	Rid int64
-	Request interface{}
-}
+type RequestExecutor func(int64, interface{}) (interface{}, error)
 
-type RequestExecutor func(int64, *Request) error
-
-type StartMsg struct {
+// StartEvent is sent once at the start of the load test.
+type StartEvent struct {
+	// The Unix epoch time in nanoseconds at which the load test started.
 	Start int64
 }
 
-func (m StartMsg) String() string {
-	return fmt.Sprintf("StartMsg{start=%d}", m.Start)
-}
-
-type EndMsg struct {
+// EndEvent is sent once at the end of the load test, after which no more events are sent.
+type EndEvent struct {
+	// The Unix epoch times in nanoseconds at which the load test started and ended.
 	Start, End int64
 }
 
-func (m EndMsg) String() string {
-	return fmt.Sprintf("EndMsg{start=%d,end=%d}", m.Start, m.End)
-}
-
-type WaitMsg struct {
+// WaitEvent is sent once for each request before sleeping for the given interval.
+type WaitEvent struct {
+	// The next wait time (in nanoseconds) and the accumulated overage time (the difference between
+	// the actual wait time and the intended wait time).
 	Wait, Overage int64
 }
 
-func (m WaitMsg) String() string {
-	return fmt.Sprintf("WaitMsg{wait=%d,overage=%d}", m.Wait, m.Overage)
+// StartRequestEvent is sent before a request is executed. The sending of this event happens before
+// the timing of the request starts, to avoid potential issues, so it contains the timestamp of the
+// event send, and not the timestamp of the request start.
+type StartRequestEvent struct {
+	// The Unix epoch time (in nanoseconds) at which this event was created, which will be earlier
+	// than the sending of the associated request (for performance reasons)
+	Time int64
+	// The request that will be sent, nothing good can come from modifying it
+	Request interface{}
 }
 
-type StartRequestMsg struct {
-	Start, Rid int64
-}
-
-func (m StartRequestMsg) String() string {
-	return fmt.Sprintf("StartRequestMsg{start=%d,requestId=%d}", m.Start, m.Rid)
-}
-
-type EndRequestMsg struct {
-	Start, End, Rid int64
+// EndRequestEvent is sent after a request has completed.
+type EndRequestEvent struct {
+	// The Unix epoch times (in nanoseconds) at which the request was started and finished
+	Start, End int64
+	// The response data returned by the request executor
+	Response interface{}
+	// An error or nil if there was no error
 	Err       error
 }
 
-func (m EndRequestMsg) String() string {
-	return fmt.Sprintf("EndRequestMsg{start=%d,end=%d,requestId=%d,error=%s}", m.Start, m.End, m.Rid, m.Err)
-}
-
-func LoadTestThroughput(intervals IntervalGenerator, requests chan *Request, requestExec RequestExecutor) chan interface{} {
-	reporter := make(chan interface{})
-
+func LoadTestThroughput(intervals IntervalGenerator, requests chan interface{}, requestExec RequestExecutor, reporter chan interface{}) {
 	go func() {
 		start := time.Now().UnixNano()
-		reporter <- &StartMsg{start}
+		reporter <- &StartEvent{start}
 
 		var wg sync.WaitGroup
 		var overage int64
@@ -73,32 +64,24 @@ func LoadTestThroughput(intervals IntervalGenerator, requests chan *Request, req
 			adjust := int64(math.Min(float64(wait), float64(overage)))
 			wait -= adjust
 			overage -= adjust
-			reporter <- &WaitMsg{wait, overage}
+			reporter <- &WaitEvent{wait, overage}
 			time.Sleep(time.Duration(wait))
 
 			wg.Add(1)
-			go func(req *Request) {
+			go func(req interface{}) {
 				defer wg.Done()
+				reporter <- &StartRequestEvent{time.Now().UnixNano(), req}
 				reqStart := time.Now().UnixNano()
-				// TODO(charles): this can block waiting for the recorder, in which case we will
-				// count the time against the service, which isn't right. How to make this not
-				// block? Create a buffered channel with a really large buffer? Can we make the
-				// buffer infinite? Is that wise? Maybe we send Start and End together, after the
-				// request is finished? At that point, maybe just send a single message for each
-				// request?
-				reporter <- &StartRequestMsg{start, request.Rid}
-				err := requestExec(time.Now().UnixNano(), req)
-				reporter <- &EndRequestMsg{reqStart, time.Now().UnixNano(), request.Rid, err}
+				res, err := requestExec(time.Now().UnixNano(), req)
+				reporter <- &EndRequestEvent{reqStart, time.Now().UnixNano(), res, err}
 			}(request)
 
 			overage += time.Now().UnixNano() - overageStart - wait
 		}
 		wg.Wait()
-		reporter <- &EndMsg{start, time.Now().UnixNano()}
+		reporter <- &EndEvent{start, time.Now().UnixNano()}
 		close(reporter)
 	}()
-
-	return reporter
 }
 
 type empty struct{}
@@ -124,35 +107,31 @@ func (s WorkerSemaphore) Wait(n int) bool {
 	return true
 }
 
-func LoadTestConcurrency(workers *WorkerSemaphore, requests chan *Request, requestExec RequestExecutor) chan interface{} {
-	reporter := make(chan interface{})
-
+func LoadTestConcurrency(workers *WorkerSemaphore, requests chan interface{}, requestExec RequestExecutor, reporter chan interface{}) {
 	go func() {
 		start := time.Now().UnixNano()
-		reporter <- &StartMsg{start}
+		reporter <- &StartEvent{start}
 
 		var wg sync.WaitGroup
 		for request := range requests {
 			workers.Wait(1)
 
 			wg.Add(1)
-			go func(req *Request) {
+			go func(req interface{}) {
 				defer func() {
 					wg.Done()
 					workers.Signal(1)
 				}()
 
 				reqStart := time.Now().UnixNano()
-				reporter <- &StartRequestMsg{start, request.Rid}
-				err := requestExec(time.Now().UnixNano(), req)
-				reporter <- &EndRequestMsg{reqStart, time.Now().UnixNano(), request.Rid, err}
+				reporter <- &StartRequestEvent{start, req}
+				res, err := requestExec(time.Now().UnixNano(), req)
+				reporter <- &EndRequestEvent{reqStart, time.Now().UnixNano(), res, err}
 			}(request)
 		}
 
 		wg.Wait()
-		reporter <- &EndMsg{start, time.Now().UnixNano()}
+		reporter <- &EndEvent{start, time.Now().UnixNano()}
 		close(reporter)
 	}()
-
-	return reporter
 }

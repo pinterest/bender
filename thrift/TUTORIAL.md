@@ -256,15 +256,14 @@ spawns a goroutine to send the request to the server. This function creates a si
 request generator:
 
 ```
-func SyntheticHelloRequests(n int) chan *bender.Request {
-	c := make(chan *bender.Request, 100)
+func SyntheticHelloRequests(n int) chan interface{} {
+	c := make(chan interface{}, 100)
 	go func() {
 		for i := 0; i < n; i++ {
 			request := hello.NewHelloRequest()
 			request.Message = "hello"
 			rid := rand.Int63()
-			brequest := &bender.Request{rid, request}
-			c <- brequest
+			c <- request
 		}
 		close(c)
 	}()
@@ -280,25 +279,28 @@ including server query logs, remote services or databases. At Pinterest, for ins
 servers log the binary Thrift requests to disk before deserializing them on the server, so we have
 a request generator that reads those files and reconstructs the production requests from them.
 
-Note that this example generates request IDs randomly, which is fine if you just need to identify
-each request uniquely, but won't work if you need to compare the result IDs with an external system
-or your own log file.
-
 ### Request Executor
 
-The last thing we need is a request executor, which takes the requests generated above and sends
+The next thing we need is a request executor, which takes the requests generated above and sends
 them to the service. We will use a helper function from Bender's thrift library to do most of the
 work (connection management, error handling, etc), so all we have to do is write code to send the
 request:
 
 ```
-func HelloExecutor(request *bender.Request, transport thrift.TTransport) error {
+func HelloExecutor(request interface{}, transport thrift.TTransport) (interface{}, error) {
 	pFac := thrift.NewTBinaryProtocolFactoryDefault()
 	client := hello.NewHelloClientFactory(transport, pFac)
-	_, err := client.Hello(request.Request.(*hello.HelloRequest))
-	return err
+	return client.Hello(request.(*hello.HelloRequest))
 }
 ```
+
+### Recorder
+
+The last thing we need is a channel that will output events as the load tester runs. This will let
+us listen to the load testers progress and record stats. We want this channel to be buffered so that
+we can run somewhat independently of the load test without slowing it down:
+
+```recorder := make(chan interface{}, 128)```
 
 ### Recording Results
 
@@ -351,33 +353,32 @@ import (
 	"math/rand"
 )
 
-func SyntheticRequests(n int) chan *bender.Request {
-	c := make(chan *bender.Request)
+func SyntheticRequests(n int) chan interface{} {
+	c := make(chan interface{})
 	go func() {
 		for i := 0; i < n; i++ {
 			request := hello.NewHelloRequest()
 			request.Message = "hello"
 			rid := rand.Int63()
-			brequest := &bender.Request{rid, request}
-			c <- brequest
+			c <- request
 		}
 		close(c)
 	}()
 	return c
 }
 
-func HelloExecutor(request *bender.Request, transport thrift.TTransport) error {
+func HelloExecutor(request interface{}, transport thrift.TTransport) (interface{}, error) {
 	pFac := thrift.NewTBinaryProtocolFactoryDefault()
 	client := hello.NewHelloClientFactory(transport, pFac)
-	_, err := client.Hello(request.Request.(*hello.HelloRequest))
-	return err
+	return client.Hello(request.(*hello.HelloRequest))
 }
 
 func main() {
 	intervals := bender.ExponentialIntervalGenerator(10.0)
 	requests := SyntheticRequests(10)
 	exec := bthrift.NewThriftRequestExec(thrift.NewTFramedTransportFactory(thrift.NewTTransportFactory()), HelloExecutor, "localhost:3636")
-	recorder := bender.LoadTestThroughput(intervals, requests, exec)
+	recorder := make(chan interface{}, 128)
+	bender.LoadTestThroughput(intervals, requests, exec, recorder)
 	l := log.New(os.Stdout, "", log.LstdFlags)
 	h := hist.NewHistogram(60000, 1000000)
 	bender.Record(recorder, bender.NewLoggingRecorder(l), bender.NewHistogramRecorder(h))

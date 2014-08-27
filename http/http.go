@@ -16,8 +16,8 @@ func CreateHttpExecutor(tr *http.Transport, client *http.Client, bodyHandler Htt
 		client = &http.Client{Transport: tr}
 	}
 
-	return func(_ int64, request *Request) error {
-		req := request.Request.(*http.Request)
+	return func(_ int64, request interface{}) error {
+		req := request.(*http.Request)
 		resp, err := client.Do(req)
 		if err != nil {
 			return err

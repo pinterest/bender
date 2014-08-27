@@ -7,20 +7,20 @@ import (
 	"math/rand"
 )
 
-type ThriftClientExecutor func(*bender.Request, thrift.TTransport) error
+type ThriftClientExecutor func(interface{}, thrift.TTransport) (interface{}, error)
 
 func NewThriftRequestExec(tFac thrift.TTransportFactory, clientExec ThriftClientExecutor, hosts... string) bender.RequestExecutor {
-	return func(_ int64, request *bender.Request) error {
+	return func(_ int64, request interface{}) (interface{}, error) {
 		addr := hosts[rand.Intn(len(hosts))]
 		socket, err := thrift.NewTSocket(addr)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		defer socket.Close()
 
 		transport := tFac.GetTransport(socket)
 		if err := transport.Open(); err != nil {
-			return err
+			return nil, err
 		}
 		defer transport.Close()
 
