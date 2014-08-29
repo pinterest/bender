@@ -10,12 +10,13 @@ type Histogram struct {
 	scale int
 	max int
 	n int
+	errCnt int
 	total int
 	values []int
 }
 
 func NewHistogram(max int, scale int) *Histogram {
-	return &Histogram{scale, max, 0, 0, make([]int, max + 1)}
+	return &Histogram{scale, max, 0, 0, 0, make([]int, max + 1)}
 }
 
 func (h *Histogram) Add(v int) {
@@ -29,6 +30,10 @@ func (h *Histogram) Add(v int) {
 	}
 	h.n++
 	h.total += v
+}
+
+func (h *Histogram) AddError() {
+	h.errCnt += 1
 }
 
 func (h *Histogram) Percentiles(percentiles ...float64) []int {
@@ -65,6 +70,10 @@ func (h *Histogram) Average() float64 {
 	return float64(h.total) / float64(h.n)
 }
 
+func (h *Histogram) ErrorPercent() float64 {
+	return float64(h.errCnt) / float64(h.n) * 100.0
+}
+
 func (h *Histogram) String() string {
 	ps := h.Percentiles(0.0, 0.5, 0.9, 0.95, 0.99, 0.999, 0.9999, 1.0)
 	s := "Percentiles:\n" +
@@ -76,6 +85,10 @@ func (h *Histogram) String() string {
 	     " 99.99th: %d\n" +
 	     " Max:     %d\n" +
 	     "Stats:\n" +
-	     " Average: %f\n"
-	return fmt.Sprintf(s, ps[0], ps[1], ps[2], ps[3], ps[4], ps[5], ps[6], h.Average())
+	     " Average: %f\n" +
+	     " Total requests: %d\n" +
+	     " Errors: %d\n" +
+	     " Percent errors: %.2f\n"
+	return fmt.Sprintf(s, ps[0], ps[1], ps[2], ps[3], ps[4], ps[5], ps[6],
+	                   h.Average(), h.n, h.errCnt, h.ErrorPercent())
 }
