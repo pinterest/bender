@@ -1,32 +1,39 @@
 /*
 Package bender load tests services that use request/reply protocols like Thrift, Protobuf or HTTP.
 
-Bender supports two different approaches to load testing. The first, LoadTestThroughput, gives the
-caller control over when requests are sent and starts as many goroutines as necessary to send those
-requests. The second, LoadTestConcurrency, gives the caller control over how many goroutines are
-used, and sends as many requests as it can using those goroutines.
+All load testers have two different variables to control: the number of threads (or goroutines, or
+actors, or whatever) and the number of requests to send. It isn't possible to fix both of these
+variables; one of them must vary. As a result, Bender provides two different approaches to load
+testing. The first, LoadTestThroughput, gives the caller control over how often requests are sent
+and it starts as many goroutines as necessary to send them. The second, LoadTestConcurrency, gives
+the caller control over how many goroutines are running, and sends as many requests as it can using
+those goroutines.
 
-LoadTestThroughput can simulate the load caused by concurrent users interacting with a service, as
-is the case for web services, or internal and external remote APIs. It is typically used to simulate
-a target QPS, and to measure the latency and error rate of a service at that QPS. The load tester
-will not stop sending requests because the service slows down or has errors, making it a good way
-to test actual behavior under load. This is usually the right approach for load testing user facing
-services.
+LoadTestThroughput simulates the load caused by concurrent clients sending requests to a service. It
+can be used to simulate a target throughput (QPS) and to measure the request latency and error rate
+at the throughput. The load tester will keep spawning goroutines to send requests, even if the
+service is sending errors or hanging, making this a good way to test the actual behavior of the
+service under heavy load. This is the approach popularized by Twitter's Iago library, and is
+nearly always the right place to start when load testing.
 
-LoadTestConcurrency is most useful for testing a services ability to handle many concurrent
-connections. It can be used to simulate a fixed or varying number of connections and to measure the
-throughput, latency and error rate of the service. The individual connections will loop, sending
-a single request, waiting for the response and then repeating. As a result, if the service slows
-down, the load tester will also slow down because the connections will all be waiting for responses.
-That makes this approach a poor way to test latency and throughput, but a good way to test resource
-limitations caused by many concurrent connections.
+LoadTestConcurrency simulates a fixed number of clients, each of which sends a request, waits for a
+response and then repeats. The downside to this approach is that increased latency from the service
+results in decreased throughput from the load tester, as the simulated clients are all waiting for
+responses. That makes this a poor way to test services, as real-world traffic doesn't behave this
+way. The best use for this function is to test services that need to handle a lot of concurrent
+connections, and for which you need to simulate many connections to test resource limits, latency
+and other metrics. This approach is used by load testers like the Grinder and JMeter, and has been
+critiqued well by Gil Tene in his talk "How Not To Measure Latency".
+
+The rest of this document discusses the details of the two approaches to load testing, and how they
+are implemented, along with the details of the arguments that are passed to them.
 
 LoadTestThroughput
 
 The LoadTestThroughput function takes four arguments. The first is a function that generates
-nanosecond intervals which are used as request arrival times. The second is a channel of requests,
-each of which has an ID and the actual request. The third is a function that knows how to send a
-request and validate the response. The inner loop of LoadTestThroughput looks like this:
+nanosecond intervals which are used as request arrival times. The second is a channel of requests.
+The third is a function that knows how to send a request and validate the response. The inner loop
+of LoadTestThroughput looks like this:
 
   for {
       interval := intervals(time.Now().UnixNanos())
@@ -102,15 +109,18 @@ you like. The important part is that the request generation be done in a separat
 communicates with the load tester via a channel. In addition, the channel must be closed to indicate
 that the load test is done.
 
-TODO(charles): how to set the buffer size on this channel? Any other performance notes?
+The requests channel should almost certainly be buffered, unless you can generate requests much
+faster than they are sent (and not just on average). The easiest way to miss your target throughput
+with LoadTestThroughput is to be blocked waiting for requests to be generated, particularly when
+testing large throughputs.
 
 Request Executors
 
 A request executor is a function that takes the current Unix Epoch time (in nanoseconds) and a
-*Request, sends the request to the service, waits for the response, validates it and returns an
-error or nil. This function is timed by the load tester, so it should do as little else as possible,
-and everything it does will be added to the reported service latency. Here, for example, is a very
-simple request executor for HTTP requests:
+*Request, sends the request to the service, waits for the response, optionally validates it and
+returns an error or nil. This function is timed by the load tester, so it should do as little else
+as possible, and everything it does will be added to the reported service latency. Here, for
+example, is a very simple request executor for HTTP requests:
 
  func HttpRequestExecutor(_ int64, request *Request) error {
      url := request.Request.(string)
@@ -122,11 +132,33 @@ The http package in Bender provides a function that generates executors that mak
 packages Transport and Client classes and provide an easy way to validate the body of the http
 request.
 
+RequestExecutors are called concurrently from multiple goroutines, and must be concurrency-safe.
+
 Event Messages
 
-The output of both LoadTestThroughput and LoadTestConcurrency is a channel of event messages.
+The LoadTestThroughput and LoadTestConcurrency functions both take a channel of events (represented
+as interface{}) as a parameter. This channel is used to output events as they happen during the load
+test, including the following events:
 
-TODO(charles): finish this
+ - StartEvent: sent once at the start of the load test.
+ - EndEvent: sent once at the end of the load test, no more events are sent after this.
+ - WaitEvent: sent only for LoadTestThroughput, see below for details.
+ - StartRequestEvent: sent before a request is sent to the service, includes the request and the
+   event time. Note that the event time is not the same as the start time for the request for
+   stupid performance reasons. If you need to know the actual start time, see the EndRequestEvent.
+ - EndRequestEvent: sent after a request has finished, includes the response, the actual start and
+   end times for the request and any error returned by the RequestExecutor.
+
+The WaitEvent includes the time until the next request is sent (in nanoseconds) and an "overage"
+time. When the inner loop sleeps, it subtracts the total time slept from the time it intended to
+sleep, and adds that to the overage. The overage, therefore, is a good proxy for how overloaded the
+load testing host is. If it grows over time, that means the load test is falling behind, and can't
+start enough goroutines to run all the requests it needs to. In that case you will need a more
+powerful load testing host, or need to distribute the load test across more hosts.
+
+The event channel doesn't need to be buffered, but it may help if you find that Bender isn't sending
+as much throughput as you expect. In general, this depends a lot on how quickly you are consuming
+events from the channel, and how quickly the load tester is running.
 */
 package bender
 

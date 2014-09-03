@@ -5,7 +5,7 @@ import (
 )
 
 func TestMinAndMax(t *testing.T) {
-	h := NewHistogram(10)
+	h := NewHistogram(10, 1)
 	h.Add(5)
 
 	percentiles := h.Percentiles(0.0, 1.0)
@@ -18,7 +18,7 @@ func TestMinAndMax(t *testing.T) {
 }
 
 func TestDistinctValues(t *testing.T) {
-	h := NewHistogram(100)
+	h := NewHistogram(100, 1)
 	for i := 1; i <= 100; i++ {
 		h.Add(i)
 	}
@@ -33,7 +33,7 @@ func TestDistinctValues(t *testing.T) {
 }
 
 func TestOverlappingValues(t *testing.T) {
-	h := NewHistogram(10)
+	h := NewHistogram(10, 1)
 	for i := 1; i < 10; i++ {
 		h.Add(i)
 		h.Add(i)
@@ -45,5 +45,16 @@ func TestOverlappingValues(t *testing.T) {
 		if p != expected[i] {
 			t.Errorf("Actual(%d) != Expected(%d)", p, expected[i])
 		}
+	}
+}
+
+func TestErrorCountAndRate(t *testing.T) {
+	h := NewHistogram(10, 1)
+	for i := 1; i < 10; i++ {
+		h.AddError()
+	}
+
+	if h.ErrorPercent() != 100.0 {
+		t.Errorf("Actual(%f) != Expected(%f)", h.ErrorPercent(), 100.0)
 	}
 }

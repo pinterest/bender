@@ -28,6 +28,10 @@ func NewLoggingRecorder(l *log.Logger) Recorder {
 func NewHistogramRecorder(h *hist.Histogram) Recorder {
 	return func(msg interface{}) {
 		switch msg := msg.(type) {
+		case *StartEvent:
+			h.Start(int(msg.Start))
+		case *EndEvent:
+			h.End(int(msg.End))
 		case *EndRequestEvent:
 			if msg.Err == nil {
 				h.Add(int(msg.End - msg.Start))

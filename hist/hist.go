@@ -7,6 +7,8 @@ import (
 )
 
 type Histogram struct {
+	start int
+	end   int
 	scale int
 	max int
 	n int
@@ -16,7 +18,15 @@ type Histogram struct {
 }
 
 func NewHistogram(max int, scale int) *Histogram {
-	return &Histogram{scale, max, 0, 0, 0, make([]int, max + 1)}
+	return &Histogram{0, 0, scale, max, 0, 0, 0, make([]int, max + 1)}
+}
+
+func (h *Histogram) Start(t int) {
+	h.start = t
+}
+
+func (h *Histogram) End(t int) {
+	h.end = t
 }
 
 func (h *Histogram) Add(v int) {
@@ -34,6 +44,7 @@ func (h *Histogram) Add(v int) {
 
 func (h *Histogram) AddError() {
 	h.errCnt += 1
+	h.n++
 }
 
 func (h *Histogram) Percentiles(percentiles ...float64) []int {
@@ -87,8 +98,12 @@ func (h *Histogram) String() string {
 	     "Stats:\n" +
 	     " Average: %f\n" +
 	     " Total requests: %d\n" +
+		 " Elapsed Time: %d\n" +
+		 " Average QPS: %d\n" +
 	     " Errors: %d\n" +
 	     " Percent errors: %.2f\n"
+	elapsed := h.end - h.start
+	averageQPS := float64(elapsed) / float64(h.n)
 	return fmt.Sprintf(s, ps[0], ps[1], ps[2], ps[3], ps[4], ps[5], ps[6],
-	                   h.Average(), h.n, h.errCnt, h.ErrorPercent())
+	                   h.Average(), h.n, elapsed, averageQPS, h.errCnt, h.ErrorPercent())
 }

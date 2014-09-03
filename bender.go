@@ -50,10 +50,12 @@ type EndRequestEvent struct {
 	Err       error
 }
 
-func LoadTestThroughput(intervals IntervalGenerator, requests chan interface{}, requestExec RequestExecutor, reporter chan interface{}) {
+// LoadTestThroughput starts a load test in which the caller controls the interval between requests
+// being sent. See the package documentation for details on the arguments to this function.
+func LoadTestThroughput(intervals IntervalGenerator, requests chan interface{}, requestExec RequestExecutor, recorder chan interface{}) {
 	go func() {
 		start := time.Now().UnixNano()
-		reporter <- &StartEvent{start}
+		recorder <- &StartEvent{start}
 
 		var wg sync.WaitGroup
 		var overage int64
@@ -64,35 +66,42 @@ func LoadTestThroughput(intervals IntervalGenerator, requests chan interface{}, 
 			adjust := int64(math.Min(float64(wait), float64(overage)))
 			wait -= adjust
 			overage -= adjust
-			reporter <- &WaitEvent{wait, overage}
+			recorder <- &WaitEvent{wait, overage}
 			time.Sleep(time.Duration(wait))
 
 			wg.Add(1)
 			go func(req interface{}) {
 				defer wg.Done()
-				reporter <- &StartRequestEvent{time.Now().UnixNano(), req}
+				recorder <- &StartRequestEvent{time.Now().UnixNano(), req}
 				reqStart := time.Now().UnixNano()
 				res, err := requestExec(time.Now().UnixNano(), req)
-				reporter <- &EndRequestEvent{reqStart, time.Now().UnixNano(), res, err}
+				recorder <- &EndRequestEvent{reqStart, time.Now().UnixNano(), res, err}
 			}(request)
 
 			overage += time.Now().UnixNano() - overageStart - wait
 		}
 		wg.Wait()
-		reporter <- &EndEvent{start, time.Now().UnixNano()}
-		close(reporter)
+		recorder <- &EndEvent{start, time.Now().UnixNano()}
+		close(recorder)
 	}()
 }
 
 type empty struct{}
+
+// WorkerSemaphore controls the number of "workers" that can be running as part of a load test
+// using LoadTestConcurrency.
 type WorkerSemaphore struct {
 	permits chan empty
 }
 
+// NewWorkerSemaphore creates an empty WorkerSemaphore (no workers).
 func NewWorkerSemaphore() *WorkerSemaphore {
+	// TODO(charles): Signal and Wait block due to permits being unbuffered, should we add a buffer?
 	return &WorkerSemaphore{permits:make(chan empty)}
 }
 
+// Signal adds a worker to the pool of workers that are currently sending requests. If no requests
+// are outstanding, this will block until a request is ready to send.
 func (s WorkerSemaphore) Signal(n int) {
 	e := empty{}
 	for i := 0; i < n; i++ {
@@ -100,6 +109,8 @@ func (s WorkerSemaphore) Signal(n int) {
 	}
 }
 
+// Wait removes a worker from the pool. If all workers are busy, then this will wait until the next
+// worker is finished, and remove it.
 func (s WorkerSemaphore) Wait(n int) bool {
 	for i := 0; i < n; i++ {
 		<-s.permits
@@ -107,10 +118,13 @@ func (s WorkerSemaphore) Wait(n int) bool {
 	return true
 }
 
-func LoadTestConcurrency(workers *WorkerSemaphore, requests chan interface{}, requestExec RequestExecutor, reporter chan interface{}) {
+// LoadTestConcurrency starts a load test in which the caller controls the number of goroutines that
+// are sending requests. See the package documentation for details on the arguments to this
+// function.
+func LoadTestConcurrency(workers *WorkerSemaphore, requests chan interface{}, requestExec RequestExecutor, recorder chan interface{}) {
 	go func() {
 		start := time.Now().UnixNano()
-		reporter <- &StartEvent{start}
+		recorder <- &StartEvent{start}
 
 		var wg sync.WaitGroup
 		for request := range requests {
@@ -124,14 +138,14 @@ func LoadTestConcurrency(workers *WorkerSemaphore, requests chan interface{}, re
 				}()
 
 				reqStart := time.Now().UnixNano()
-				reporter <- &StartRequestEvent{start, req}
+				recorder <- &StartRequestEvent{start, req}
 				res, err := requestExec(time.Now().UnixNano(), req)
-				reporter <- &EndRequestEvent{reqStart, time.Now().UnixNano(), res, err}
+				recorder <- &EndRequestEvent{reqStart, time.Now().UnixNano(), res, err}
 			}(request)
 		}
 
 		wg.Wait()
-		reporter <- &EndEvent{start, time.Now().UnixNano()}
-		close(reporter)
+		recorder <- &EndEvent{start, time.Now().UnixNano()}
+		close(recorder)
 	}()
 }
