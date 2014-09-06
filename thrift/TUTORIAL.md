@@ -262,7 +262,6 @@ func SyntheticHelloRequests(n int) chan interface{} {
 		for i := 0; i < n; i++ {
 			request := hello.NewHelloRequest()
 			request.Message = "hello"
-			rid := rand.Int63()
 			c <- request
 		}
 		close(c)
@@ -350,16 +349,14 @@ import (
 	"github.com/Pinterest/bender/hist"
 	"fmt"
 	"$PKG/hellothrift/hello"
-	"math/rand"
 )
 
 func SyntheticRequests(n int) chan interface{} {
-	c := make(chan interface{})
+	c := make(chan interface{}, 100)
 	go func() {
 		for i := 0; i < n; i++ {
 			request := hello.NewHelloRequest()
-			request.Message = "hello"
-			rid := rand.Int63()
+			request.Message = "hello " + i
 			c <- request
 		}
 		close(c)

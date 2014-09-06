@@ -33,10 +33,11 @@ func NewHistogramRecorder(h *hist.Histogram) Recorder {
 		case *EndEvent:
 			h.End(int(msg.End))
 		case *EndRequestEvent:
+			elapsed := int(msg.End - msg.Start)
 			if msg.Err == nil {
-				h.Add(int(msg.End - msg.Start))
+				h.Add(elapsed)
 			} else {
-				h.AddError()
+				h.AddError(elapsed)
 			}
 		}
 	}

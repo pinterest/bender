@@ -4,6 +4,7 @@ import (
 	"sort"
 	"math"
 	"fmt"
+	"time"
 )
 
 type Histogram struct {
@@ -42,35 +43,31 @@ func (h *Histogram) Add(v int) {
 	h.total += v
 }
 
-func (h *Histogram) AddError() {
+func (h *Histogram) AddError(v int) {
+	h.Add(v)
 	h.errCnt += 1
-	h.n++
 }
 
 func (h *Histogram) Percentiles(percentiles ...float64) []int {
-	if percentiles == nil {
-		return nil
+	result := make([]int, len(percentiles))
+	if percentiles == nil || len(percentiles) == 0 {
+		return result
 	}
 
 	sort.Sort(sort.Float64Slice(percentiles))
-	pcs := make([]int, len(percentiles))
-	for i, percentile := range percentiles {
-		if percentile > 1.0 || percentile < 0.0 {
-			panic("Percentiles must be in [0.0, 1.0]")
-		}
 
-		pcs[i] = int(math.Max(1.0, percentile * float64(h.n)))
-	}
+	accum := 0
+	p_idx := int(math.Max(1.0, percentiles[0] * float64(h.n)))
+	for i, j := 0, 0; i < len(percentiles) && j < len(h.values); j++ {
+		accum += h.values[j]
 
-	result := make([]int, len(pcs))
-
-	count := 0
-	for i, j := 0, 0; i < len(pcs) && j < len(h.values); j++ {
-		count += h.values[j]
-
-		// one histogram bucket can match multiple percentiles
-		for ; i < len(pcs) && count >= pcs[i]; i++ {
+		for ; accum >= p_idx; {
 			result[i] = j
+			i++
+			if i >= len(percentiles) {
+				break
+			}
+			p_idx = int(math.Max(1.0, percentiles[i] * float64(h.n)))
 		}
 	}
 
@@ -98,12 +95,12 @@ func (h *Histogram) String() string {
 	     "Stats:\n" +
 	     " Average: %f\n" +
 	     " Total requests: %d\n" +
-		 " Elapsed Time: %d\n" +
-		 " Average QPS: %d\n" +
+		 " Elapsed Time (sec): %.4f\n" +
+		 " Average QPS: %.2f\n" +
 	     " Errors: %d\n" +
 	     " Percent errors: %.2f\n"
-	elapsed := h.end - h.start
-	averageQPS := float64(elapsed) / float64(h.n)
+	elapsedSecs := float64(h.end - h.start) / float64(time.Second)
+	averageQPS := float64(h.n) / elapsedSecs
 	return fmt.Sprintf(s, ps[0], ps[1], ps[2], ps[3], ps[4], ps[5], ps[6],
-	                   h.Average(), h.n, elapsed, averageQPS, h.errCnt, h.ErrorPercent())
+	                   h.Average(), h.n, elapsedSecs, averageQPS, h.errCnt, h.ErrorPercent())
 }

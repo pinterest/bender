@@ -5,14 +5,15 @@ import (
 	"bytes"
 	"github.com/Pinterest/bender"
 	"math/rand"
+	"time"
 )
 
 type ThriftClientExecutor func(interface{}, thrift.TTransport) (interface{}, error)
 
-func NewThriftRequestExec(tFac thrift.TTransportFactory, clientExec ThriftClientExecutor, hosts... string) bender.RequestExecutor {
+func NewThriftRequestExec(tFac thrift.TTransportFactory, clientExec ThriftClientExecutor, timeout time.Duration, hosts... string) bender.RequestExecutor {
 	return func(_ int64, request interface{}) (interface{}, error) {
 		addr := hosts[rand.Intn(len(hosts))]
-		socket, err := thrift.NewTSocket(addr)
+		socket, err := thrift.NewTSocketTimeout(addr, timeout)
 		if err != nil {
 			return nil, err
 		}

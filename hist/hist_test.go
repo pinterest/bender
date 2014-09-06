@@ -51,7 +51,7 @@ func TestOverlappingValues(t *testing.T) {
 func TestErrorCountAndRate(t *testing.T) {
 	h := NewHistogram(10, 1)
 	for i := 1; i < 10; i++ {
-		h.AddError()
+		h.AddError(1)
 	}
 
 	if h.ErrorPercent() != 100.0 {
