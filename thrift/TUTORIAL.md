@@ -324,8 +324,14 @@ h := hist.NewHistogram(60000, 10000000)
 bender.Record(recorder, bender.NewLoggingRecorder(l), bender.NewHistogramRecorder(h))
 ```
 
+The histogram takes two arguments: the number of buckets and a scaling factor for times. In this
+case we are going to record times in milliseconds and allow 60,000 buckets for times up to one
+minute. The scaling factor is 1,000,000 which converts from nanoseconds (the timer values) to
+milliseconds.
+
 It is relatively easy to build recorders, or to just process the events from the channel yourself,
-see the Bender README file for more details on what events can be sent, and what data they contain.
+see the Bender documentation for more details on what events can be sent, and what data they
+contain.
 
 ### Final Load Tester Program
 
@@ -348,6 +354,7 @@ import (
 	"os"
 	"github.com/Pinterest/bender/hist"
 	"fmt"
+	"time"
 	"$PKG/hellothrift/hello"
 )
 
@@ -373,7 +380,7 @@ func HelloExecutor(request interface{}, transport thrift.TTransport) (interface{
 func main() {
 	intervals := bender.ExponentialIntervalGenerator(10.0)
 	requests := SyntheticRequests(10)
-	exec := bthrift.NewThriftRequestExec(thrift.NewTFramedTransportFactory(thrift.NewTTransportFactory()), HelloExecutor, "localhost:3636")
+	exec := bthrift.NewThriftRequestExec(thrift.NewTFramedTransportFactory(thrift.NewTTransportFactory()), HelloExecutor, 10 * time.Second, "localhost:3636")
 	recorder := make(chan interface{}, 128)
 	bender.LoadTestThroughput(intervals, requests, exec, recorder)
 	l := log.New(os.Stdout, "", log.LstdFlags)
