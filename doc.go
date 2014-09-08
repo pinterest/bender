@@ -1,20 +1,19 @@
 /*
-Package bender load tests services that use request/reply protocols like Thrift, Protobuf or HTTP.
+Package bender makes it easy to build load testing applications for services using protocols like
+HTTP, Thrift, Protocol Buffers and many others.
 
-All load testers have two different variables to control: the number of threads (or goroutines, or
-actors, or whatever) and the number of requests to send. It isn't possible to fix both of these
-variables; one of them must vary. As a result, Bender provides two different approaches to load
-testing. The first, LoadTestThroughput, gives the caller control over how often requests are sent
-and it starts as many goroutines as necessary to send them. The second, LoadTestConcurrency, gives
-the caller control over how many goroutines are running, and sends as many requests as it can using
-those goroutines.
+Bender provides two different approaches to load testing. The first, LoadTestThroughput, gives the
+tester control over the throughput (QPS), but not over the concurrency (number of goroutines). The
+second, LoadTestConcurrency, gives the tester control over the concurrency, but not over the
+throughput.
 
 LoadTestThroughput simulates the load caused by concurrent clients sending requests to a service. It
 can be used to simulate a target throughput (QPS) and to measure the request latency and error rate
-at the throughput. The load tester will keep spawning goroutines to send requests, even if the
+at that throughput. The load tester will keep spawning goroutines to send requests, even if the
 service is sending errors or hanging, making this a good way to test the actual behavior of the
-service under heavy load. This is the approach popularized by Twitter's Iago library, and is
-nearly always the right place to start when load testing.
+service under heavy load. This is the same approach used by Twitter's Iago library, and is nearly
+always the right place to start when load testing services exposed (directly or indirectly) to the
+Internet.
 
 LoadTestConcurrency simulates a fixed number of clients, each of which sends a request, waits for a
 response and then repeats. The downside to this approach is that increased latency from the service
@@ -25,8 +24,10 @@ connections, and for which you need to simulate many connections to test resourc
 and other metrics. This approach is used by load testers like the Grinder and JMeter, and has been
 critiqued well by Gil Tene in his talk "How Not To Measure Latency".
 
-The rest of this document discusses the details of the two approaches to load testing, and how they
-are implemented, along with the details of the arguments that are passed to them.
+The next two sections provide more detail on the implementations of LoadTestThroughput and
+LoadTestConcurrency. The following sections provide descriptions for the common arguments to the
+load testing functions, and how they work, including the interval generators, request generators,
+request executors and event recorders.
 
 LoadTestThroughput
 
