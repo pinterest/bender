@@ -2,8 +2,8 @@ Bender Thrift Tutorial
 ======================
 
 This tutorial walks through the steps to create a simple "Hello, World" Thrift service with a load
-tester for testing it. It assumes no prior knowledge of Go or Thrift. If you already know how to use
-Thrift with Go, skip down to the "Load Testing" section to get started with Bender and Thrift.
+tester. It assumes no prior knowledge of Go or Thrift. If you already know how to use Thrift with
+Go, skip down to the "Load Testing" section to get started with Bender and Thrift.
 
 ## Getting Started
 
@@ -293,15 +293,13 @@ func HelloExecutor(request interface{}, transport thrift.TTransport) (interface{
 }
 ```
 
-### Recorder
+### Recording Results
 
 The last thing we need is a channel that will output events as the load tester runs. This will let
 us listen to the load testers progress and record stats. We want this channel to be buffered so that
 we can run somewhat independently of the load test without slowing it down:
 
 ```recorder := make(chan interface{}, 128)```
-
-### Recording Results
 
 The `LoadTestThroughput` function returns a channel on which it will send events for things like
 the start of the load test, how long it waits between requests, how much overage it is currently

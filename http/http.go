@@ -6,9 +6,9 @@ import (
 	"github.com/Pinterest/bender"
 )
 
-type HttpBodyHandler func(*io.ReadCloser) error
+type HttpBodyValidator func(request interface{}, body io.ReadCloser) error
 
-func CreateHttpExecutor(tr *http.Transport, client *http.Client, bodyHandler HttpBodyHandler) bender.RequestExecutor {
+func CreateHttpExecutor(tr *http.Transport, client *http.Client, bodyValidator HttpBodyValidator) bender.RequestExecutor {
 	if tr == nil {
 		tr = &http.Transport{}
 		client = &http.Client{Transport: tr}
@@ -16,17 +16,17 @@ func CreateHttpExecutor(tr *http.Transport, client *http.Client, bodyHandler Htt
 		client = &http.Client{Transport: tr}
 	}
 
-	return func(_ int64, request interface{}) error {
+	return func(_ int64, request interface{}) (interface{}, error) {
 		req := request.(*http.Request)
 		resp, err := client.Do(req)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		defer resp.Body.Close()
-		err = bodyHandler(&resp.Body)
+		err = bodyValidator(request, resp.Body)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		return nil
+		return resp, nil
 	}
 }
