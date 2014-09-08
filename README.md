@@ -1,21 +1,23 @@
 bender
 ======
 
-Bender is a library that makes it easy to build custom load testing applications for request/reply
-protocols like HTTP, Thrift and Protobuf (among many, many others). You write a Go client for your
-service and generate requests (any way you like); Bender handles sending the requests and measuring
-the results.
+Bender makes it easy to build load testing applications for services using protocols like HTTP,
+Thrift, Protocol Buffers and many more. Bender provides a library of flexible, powerful primitives
+that can be combined (with plain Go code) to build load testers customized to any use case and that
+evolve with your service over time.
 
-That Bender is a library makes it flexible and easy to extend, but gives it a slightly longer
-learning curve. Bender provides two different approaches to load testing (by throughput or by
-concurrency) along with utilities for generating Thrift and HTTP clients and requests. It also
-provides a flexible way to capture events as they happen, and record them in a histogram and via a
-log file. The underlying philosophy of the library is to provide powerful, orthogonal primitives and
-to let programmers use Go to combine them. To make that easier, Bender has extensive documentation
-and tutorials which you can find below.
+Bender provides two different approaches to load testing. The first, LoadTestThroughput, gives the
+tester control over the throughput (QPS), but not over the concurrency. This one is very well
+suited for services that are open to the Internet, like web services, and even backend Thrift or
+Protocol Buffer services, since it will just keep sending requests, even if the service is
+struggling. The second approach, LoadTestConcurrency, gives the tester control over the concurrency,
+but not over the throughput. This approach is better suited to testing services that require lots of
+concurrent connections, and need to be tested for resource limits.
 
-*WARNING:* this library is not ready for production. We are busy "dogfooding" it right now, and will
-update this README when it is ready. Until then, expect huge changes in the API!
+That Bender is a library makes it flexible and easy to extend, but means it takes longer to create
+an initial load tester. As a result, we've focused on creating easy-to-follow tutorials that are
+written for people unfamiliar with Go, along with documentation for all the major functions in the
+library.
 
 ## Getting Started
 
@@ -28,6 +30,25 @@ The easiest way to get started with Bender is to use one of the tutorials:
 
 The package documentation is available on [godoc.org](http://godoc.org/github.com/pinterest/bender).
 The function and data structure documentation is also available there.
+
+## What Is Missing
+
+Bender does not provide any support for sending load from more than one machine. If you need to
+send more load than a single machine can handle, or you need the requests to come from multiple
+physical hosts (or different networks, or whatever), you currently have to write your own tools. In
+addition, the histogram implementation used by Bender is inefficient to send over the network,
+unlike q-digest or t-digest, which we hope to implement in the future.
+
+Bender does not provide any visualization tools, and has a relatively simple set of measurements,
+including a customizable histogram of latencies, an error rate and some other summary statistics.
+Bender does provide a complete log of everything that happens during a load test, so you can use
+existing tools to graph any aspect of that data, but nothing in Bender makes that easy right now.
+
+Bender only provides helper functions for HTTP and Thrift currently, because that is all we use
+internally at Pinterest.
+
+The load testers we have written internally with Bender have a lot of common command line arguments,
+but we haven't finalized a set to share as part of the library.
 
 ## Comparison to Other Load Testers
 
