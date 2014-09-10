@@ -159,14 +159,18 @@ The LoadTestThroughput and LoadTestConcurrency functions both take a channel of 
 as interface{}) as a parameter. This channel is used to output events as they happen during the load
 test, including the following events:
 
- - StartEvent: sent once at the start of the load test.
- - EndEvent: sent once at the end of the load test, no more events are sent after this.
- - WaitEvent: sent only for LoadTestThroughput, see below for details.
- - StartRequestEvent: sent before a request is sent to the service, includes the request and the
-   event time. Note that the event time is not the same as the start time for the request for
-   stupid performance reasons. If you need to know the actual start time, see the EndRequestEvent.
- - EndRequestEvent: sent after a request has finished, includes the response, the actual start and
-   end times for the request and any error returned by the RequestExecutor.
+StartEvent: sent once at the start of the load test.
+
+EndEvent: sent once at the end of the load test, no more events are sent after this.
+
+WaitEvent: sent only for LoadTestThroughput, see below for details.
+
+StartRequestEvent: sent before a request is sent to the service, includes the request and the
+event time. Note that the event time is not the same as the start time for the request for
+stupid performance reasons. If you need to know the actual start time, see the EndRequestEvent.
+
+EndRequestEvent: sent after a request has finished, includes the response, the actual start and
+end times for the request and any error returned by the RequestExecutor.
 
 The WaitEvent includes the time until the next request is sent (in nanoseconds) and an "overage"
 time. When the inner loop sleeps, it subtracts the total time slept from the time it intended to
