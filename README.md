@@ -75,3 +75,13 @@ The Grinder has the same load testing approach as JMeter, but allows scripting v
 makes it more flexible and extensible. The Grinder uses threads, which limits the concurrency at
 which it can work, and makes it hard to implement things like Bender's LoadTestThroughput function.
 The Grinder does have support for conveniently running distributed load tests.
+
+## Attribution
+
+Bender includes open source from the following sources:
+
+Apache Thrift Libraries
+Copyright 2014 Apache Software Foundation. Licensed under the Apache License v2.0 (http://www.apache.org/licenses/).
+
+Go Libraries
+Copyright 2012 The Go Authors. Licensed under the BSD license (http://golang.org/LICENSE). 
