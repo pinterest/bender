@@ -50,6 +50,9 @@ internally at Pinterest.
 The load testers we have written internally with Bender have a lot of common command line arguments,
 but we haven't finalized a set to share as part of the library.
 
+The documentation doesn't provide guidance for tuning channel buffer sizes or Linux TCP tunables,
+and these can make a big difference in the throughput from a single host.
+
 ## Comparison to Other Load Testers
 
 #### JMeter

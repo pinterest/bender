@@ -92,7 +92,9 @@ those for LoadTestThroughput. The inner loop of LoadTestConcurrency does somethi
   }
 
 Reducing the semaphore count will reduce the number of running connections as existing connections
-complete, so there can be some lag.
+complete, so there can be some lag between calling workerSem.Wait(n) and the number of running
+connections actually decreasing by n. The worker semaphore does not protect you from reducing the
+number of workers below zero, which will cause undefined behavior from the load tester.
 
 As with LoadTestThroughput, the load test ends when the request channel is closed and all remaining
 requests have been executed.
@@ -129,7 +131,7 @@ that the load test is done.
 The requests channel should almost certainly be buffered, unless you can generate requests much
 faster than they are sent (and not just on average). The easiest way to miss your target throughput
 with LoadTestThroughput is to be blocked waiting for requests to be generated, particularly when
-testing large throughputs.
+testing a large throughput.
 
 Request Executors
 
@@ -175,7 +177,8 @@ powerful load testing host, or need to distribute the load test across more host
 
 The event channel doesn't need to be buffered, but it may help if you find that Bender isn't sending
 as much throughput as you expect. In general, this depends a lot on how quickly you are consuming
-events from the channel, and how quickly the load tester is running.
+events from the channel, and how quickly the load tester is running. It is a good practice to
+proactively buffer this channel.
 */
 package bender
 
