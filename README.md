@@ -1,4 +1,4 @@
-bender
+Bender
 ======
 
 Bender makes it easy to build load testing applications for services using protocols like HTTP,
@@ -31,6 +31,62 @@ The easiest way to get started with Bender is to use one of the tutorials:
 The package documentation is available on [godoc.org](http://godoc.org/github.com/pinterest/bender).
 The function and data structure documentation is also available there.
 
+## Performance
+
+We have only informal, anecdotal evidence for the maximum performance of Bender. For example, in a
+very simple load test using a Thrift server that just echoes a message, Bender was able to send
+7,000 QPS from a single EC2 m3.2xlarge host. At higher throughput the Bender "overage" counter
+increased, indicating that either the Go runtime, the OS or the host was struggling to keep up.
+
+We have found a few things that make a big difference when running load tests. First, the Go
+runtime needs some tuning. In particular, the Go GC is very immature, so we prefer to disable it
+using the `GOGC=off` environment variable. In addition, we have seen some gains from setting
+`GOMAXPROCS` to twice the number of CPUs.
+
+Secondly, the Linux TCP stack for a default server installation is usually not tuned to high
+throughput servers or load testers. After some experimentation, we have settled on adding these
+lines to `/etc/sysctl.conf`, after which you can run `sysctl -p` to load them (although it is
+recommended to restart your host at this point to make sure these take effect).
+
+```
+# /etc/sysctl.conf
+# Increase system file descriptor limit
+fs.file-max = 100000
+
+# Increase ephermeral IP ports
+net.ipv4.ip_local_port_range = 10000 65000
+
+# Increase Linux autotuning TCP buffer limits
+# Set max to 16MB for 1GE and 32M (33554432) or 54M (56623104) for 10GE
+# Don't set tcp_mem itself! Let the kernel scale it based on RAM.
+net.core.rmem_max = 16777216
+net.core.wmem_max = 16777216
+net.core.rmem_default = 16777216
+net.core.wmem_default = 16777216
+net.core.optmem_max = 40960
+net.ipv4.tcp_rmem = 4096 87380 16777216
+net.ipv4.tcp_wmem = 4096 65536 16777216
+
+# Make room for more TIME_WAIT sockets due to more clients,
+# and allow them to be reused if we run out of sockets
+# Also increase the max packet backlog
+net.core.netdev_max_backlog = 50000
+net.ipv4.tcp_max_syn_backlog = 30000
+net.ipv4.tcp_max_tw_buckets = 2000000
+net.ipv4.tcp_tw_reuse = 1
+net.ipv4.tcp_fin_timeout = 10
+
+# Disable TCP slow start on idle connections
+net.ipv4.tcp_slow_start_after_idle = 0
+```
+
+This is a slightly modified version of advice taken from this source:
+http://www.nateware.com/linux-network-tuning-for-2013.html#.VBjahC5dVyE
+
+In addition, it helps to increase the open file limit with something like:
+
+```ulimit -n 100000```
+
 ## What Is Missing
 
 Bender does not provide any support for sending load from more than one machine. If you need to
@@ -49,9 +105,6 @@ internally at Pinterest.
 
 The load testers we have written internally with Bender have a lot of common command line arguments,
 but we haven't finalized a set to share as part of the library.
-
-The documentation doesn't provide guidance for tuning channel buffer sizes or Linux TCP tunables,
-and these can make a big difference in the throughput from a single host.
 
 ## Comparison to Other Load Testers
 
