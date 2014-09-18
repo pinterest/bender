@@ -132,12 +132,25 @@ makes it more flexible and extensible. The Grinder uses threads, which limits th
 which it can work, and makes it hard to implement things like Bender's LoadTestThroughput function.
 The Grinder does have support for conveniently running distributed load tests.
 
+## Copyright
+
+Copyright 2014 Pinterest.com
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
 ## Attribution
 
 Bender includes open source from the following sources:
 
-Apache Thrift Libraries
-Copyright 2014 Apache Software Foundation. Licensed under the Apache License v2.0 (http://www.apache.org/licenses/).
-
-Go Libraries
-Copyright 2012 The Go Authors. Licensed under the BSD license (http://golang.org/LICENSE). 
+* Apache Thrift Libraries. Copyright 2014 Apache Software Foundation. Licensed under the Apache License v2.0 (http://www.apache.org/licenses/).
+* Go Libraries. Copyright 2012 The Go Authors. Licensed under the BSD license (http://golang.org/LICENSE). 
