@@ -12,19 +12,19 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
- */
+*/
 
 package bender
 
 import (
-	"testing"
-	"reflect"
 	"errors"
+	"reflect"
+	"testing"
 )
 
 type Request struct{}
 
-func assertMessages(t *testing.T, cr chan interface{}, expected_msgs... interface{}) {
+func assertMessages(t *testing.T, cr chan interface{}, expected_msgs ...interface{}) {
 	for _, msg := range expected_msgs {
 		actual_msg, ok := <-cr
 		if !ok {
@@ -50,7 +50,7 @@ func assertMessages(t *testing.T, cr chan interface{}, expected_msgs... interfac
 	}
 }
 
-func requests(rs... interface{}) chan interface{} {
+func requests(rs ...interface{}) chan interface{} {
 	c := make(chan interface{})
 	go func() {
 		for _, r := range rs {
@@ -92,7 +92,7 @@ func TestLoadTestThroughputOneSuccess(t *testing.T) {
 func TestLoadTestThroughputOneError(t *testing.T) {
 	cr := make(chan interface{})
 	LoadTestThroughput(UniformIntervalGenerator(0), requests(Request{}), errorExec, cr)
-	assertMessages(t, cr, &StartEvent{}, &WaitEvent{}, &StartRequestEvent{}, &EndRequestEvent{Err:errors.New("foo")}, &EndEvent{})
+	assertMessages(t, cr, &StartEvent{}, &WaitEvent{}, &StartRequestEvent{}, &EndRequestEvent{Err: errors.New("foo")}, &EndEvent{})
 }
 
 func TestLoadTestConcurrencyNoRequests(t *testing.T) {
@@ -110,5 +110,5 @@ func TestLoadTestConcurrencyOneSuccess(t *testing.T) {
 func TestLoadTestConcurrencyOneError(t *testing.T) {
 	cr := make(chan interface{})
 	LoadTestConcurrency(workers(1), requests(Request{}), errorExec, cr)
-	assertMessages(t, cr, &StartEvent{}, &StartRequestEvent{}, &EndRequestEvent{Err:errors.New("foo")}, &EndEvent{})
+	assertMessages(t, cr, &StartEvent{}, &StartRequestEvent{}, &EndRequestEvent{Err: errors.New("foo")}, &EndEvent{})
 }
