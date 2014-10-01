@@ -12,7 +12,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
- */
+*/
 
 package bender
 
@@ -63,7 +63,7 @@ type EndRequestEvent struct {
 	// The response data returned by the request executor
 	Response interface{}
 	// An error or nil if there was no error
-	Err       error
+	Err error
 }
 
 // LoadTestThroughput starts a load test in which the caller controls the interval between requests
@@ -113,7 +113,7 @@ type WorkerSemaphore struct {
 // NewWorkerSemaphore creates an empty WorkerSemaphore (no workers).
 func NewWorkerSemaphore() *WorkerSemaphore {
 	// TODO(charles): Signal and Wait block due to permits being unbuffered, should we add a buffer?
-	return &WorkerSemaphore{permits:make(chan empty)}
+	return &WorkerSemaphore{permits: make(chan empty)}
 }
 
 // Signal adds a worker to the pool of workers that are currently sending requests. If no requests

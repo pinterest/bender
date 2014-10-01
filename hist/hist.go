@@ -12,30 +12,30 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
- */
+*/
 
 package hist
 
 import (
-	"sort"
-	"math"
 	"fmt"
+	"math"
+	"sort"
 	"time"
 )
 
 type Histogram struct {
-	start int
-	end   int
-	scale int
-	max int
-	n int
+	start  int
+	end    int
+	scale  int
+	max    int
+	n      int
 	errCnt int
-	total int
+	total  int
 	values []int
 }
 
 func NewHistogram(max int, scale int) *Histogram {
-	return &Histogram{0, 0, scale, max, 0, 0, 0, make([]int, max + 1)}
+	return &Histogram{0, 0, scale, max, 0, 0, 0, make([]int, max+1)}
 }
 
 func (h *Histogram) Start(t int) {
@@ -73,17 +73,17 @@ func (h *Histogram) Percentiles(percentiles ...float64) []int {
 	sort.Sort(sort.Float64Slice(percentiles))
 
 	accum := 0
-	p_idx := int(math.Max(1.0, percentiles[0] * float64(h.n)))
+	p_idx := int(math.Max(1.0, percentiles[0]*float64(h.n)))
 	for i, j := 0, 0; i < len(percentiles) && j < len(h.values); j++ {
 		accum += h.values[j]
 
-		for ; accum >= p_idx; {
+		for accum >= p_idx {
 			result[i] = j
 			i++
 			if i >= len(percentiles) {
 				break
 			}
-			p_idx = int(math.Max(1.0, percentiles[i] * float64(h.n)))
+			p_idx = int(math.Max(1.0, percentiles[i]*float64(h.n)))
 		}
 	}
 
@@ -101,22 +101,22 @@ func (h *Histogram) ErrorPercent() float64 {
 func (h *Histogram) String() string {
 	ps := h.Percentiles(0.0, 0.5, 0.9, 0.95, 0.99, 0.999, 0.9999, 1.0)
 	s := "Percentiles:\n" +
-	     " Min:     %d\n" +
-	     " Median:  %d\n" +
-	     " 90th:    %d\n" +
-	     " 99th:    %d\n" +
-	     " 99.9th:  %d\n" +
-	     " 99.99th: %d\n" +
-	     " Max:     %d\n" +
-	     "Stats:\n" +
-	     " Average: %f\n" +
-	     " Total requests: %d\n" +
-		 " Elapsed Time (sec): %.4f\n" +
-		 " Average QPS: %.2f\n" +
-	     " Errors: %d\n" +
-	     " Percent errors: %.2f\n"
-	elapsedSecs := float64(h.end - h.start) / float64(time.Second)
+		" Min:     %d\n" +
+		" Median:  %d\n" +
+		" 90th:    %d\n" +
+		" 99th:    %d\n" +
+		" 99.9th:  %d\n" +
+		" 99.99th: %d\n" +
+		" Max:     %d\n" +
+		"Stats:\n" +
+		" Average: %f\n" +
+		" Total requests: %d\n" +
+		" Elapsed Time (sec): %.4f\n" +
+		" Average QPS: %.2f\n" +
+		" Errors: %d\n" +
+		" Percent errors: %.2f\n"
+	elapsedSecs := float64(h.end-h.start) / float64(time.Second)
 	averageQPS := float64(h.n) / elapsedSecs
 	return fmt.Sprintf(s, ps[0], ps[1], ps[2], ps[3], ps[4], ps[5], ps[6],
-	                   h.Average(), h.n, elapsedSecs, averageQPS, h.errCnt, h.ErrorPercent())
+		h.Average(), h.n, elapsedSecs, averageQPS, h.errCnt, h.ErrorPercent())
 }

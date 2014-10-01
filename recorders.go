@@ -12,18 +12,19 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
- */
+*/
 
 package bender
 
 import (
 	"log"
-	"github.com/Pinterest/bender/hist"
+
+	"github.com/pinterest/bender/hist"
 )
 
 type Recorder func(interface{})
 
-func Record(c chan interface{}, recorders... Recorder) {
+func Record(c chan interface{}, recorders ...Recorder) {
 	for msg := range c {
 		for _, recorder := range recorders {
 			recorder(msg)
@@ -58,4 +59,3 @@ func NewHistogramRecorder(h *hist.Histogram) Recorder {
 		}
 	}
 }
-

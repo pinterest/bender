@@ -12,7 +12,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
- */
+*/
 
 /*
 Package bender makes it easy to build load testing applications for services using protocols like
@@ -185,4 +185,3 @@ events from the channel, and how quickly the load tester is running. It is a goo
 proactively buffer this channel.
 */
 package bender
-
