@@ -75,9 +75,8 @@ func LoadTestThroughput(intervals IntervalGenerator, requests chan interface{}, 
 
 		var wg sync.WaitGroup
 		var overage int64
+		overageStart := time.Now().UnixNano()
 		for request := range requests {
-			overageStart := time.Now().UnixNano()
-
 			wait := intervals(overageStart)
 			adjust := int64(math.Min(float64(wait), float64(overage)))
 			wait -= adjust
@@ -95,6 +94,7 @@ func LoadTestThroughput(intervals IntervalGenerator, requests chan interface{}, 
 			}(request)
 
 			overage += time.Now().UnixNano() - overageStart - wait
+			overageStart = time.Now().UnixNano()
 		}
 		wg.Wait()
 		recorder <- &EndEvent{start, time.Now().UnixNano()}
