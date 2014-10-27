@@ -40,11 +40,11 @@ func assertMessages(t *testing.T, cr chan interface{}, expected_msgs ...interfac
 		switch m := actual_msg.(type) {
 		case *EndRequestEvent:
 			if m.Err != nil && msg.(*EndRequestEvent).Err == nil {
-				t.Errorf("Expected EndRequestEvent with no error (%s), but got EndRequestEvent with an error (%s)", msg, m)
+				t.Errorf("Expected EndRequestEvent with no error (%+v), but got EndRequestEvent with an error (%+v)", msg, m)
 			}
 
 			if m.Err == nil && msg.(*EndRequestEvent).Err != nil {
-				t.Errorf("Expected EndRequestEvent with an error (%s), but got EndRequestEvent with no error (%s)", msg, m)
+				t.Errorf("Expected EndRequestEvent with an error (%+v), but got EndRequestEvent with no error (%+v)", msg, m)
 			}
 		}
 	}
