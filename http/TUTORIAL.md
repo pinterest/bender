@@ -15,7 +15,7 @@ workspace and the `GOPATH` environment variable, which we will use throughout th
 You will also need the latest version of Bender, which you can get by running:
 
 ```
-go get github.com/Pinterest/bender
+go get github.com/pinterest/bender
 ```
 
 ### Writing the HTTP Server and Client
@@ -29,7 +29,7 @@ In the following, all commands should be run from the `$GOROOT` directory, unles
 ### Creating the Go Package
 
 Create a new Go package for your HTTP server and client. We'll refer to this as `$PKG` in this
-document, and it can be any path you want. At Pinterest, for example, we use `github.com/Pinterest`.
+document, and it can be any path you want. At Pinterest, for example, we use `github.com/pinterest`.
 
 ```
 cd $GOPATH
@@ -268,13 +268,13 @@ Then create a file named `main.go` in that directory and add these lines to it:
 package main
 
 import (
-	"github.com/Pinterest/bender"
+	"github.com/pinterest/bender"
 	"log"
 	"os"
-	"github.com/Pinterest/bender/hist"
+	"github.com/pinterest/bender/hist"
 	"time"
 	"fmt"
-	bhttp "github.com/Pinterest/bender/http"
+	bhttp "github.com/pinterest/bender/http"
 	"net/url"
 	"net/http"
 	"bytes"
