@@ -23,9 +23,9 @@ import (
 	"github.com/benbooth493/bender"
 )
 
-type HttpBodyValidator func(request interface{}, body io.ReadCloser) error
+type HttpValidator func(request interface{}, resp *http.Response) error
 
-func CreateHttpExecutor(tr *http.Transport, client *http.Client, bodyValidator HttpBodyValidator) bender.RequestExecutor {
+func CreateHttpExecutor(tr *http.Transport, client *http.Client, httpValidator HttpValidator) bender.RequestExecutor {
 	if tr == nil {
 		tr = &http.Transport{}
 		client = &http.Client{Transport: tr}
