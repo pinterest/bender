@@ -23,7 +23,6 @@ library.
 
 The easiest way to get started with Bender is to use one of the tutorials:
 
-* [Thrift](https://github.com/benbooth493/bender/blob/master/thrift/TUTORIAL.md)
 * [HTTP](https://github.com/benbooth493/bender/blob/master/http/TUTORIAL.md)
 
 ## Documentation
