@@ -19,7 +19,7 @@ package bender
 import (
 	"log"
 
-	"github.com/pinterest/bender/hist"
+	"github.com/benbooth493/bender/hist"
 )
 
 type Recorder func(interface{})

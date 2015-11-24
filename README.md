@@ -23,12 +23,12 @@ library.
 
 The easiest way to get started with Bender is to use one of the tutorials:
 
-* [Thrift](https://github.com/pinterest/bender/blob/master/thrift/TUTORIAL.md)
-* [HTTP](https://github.com/pinterest/bender/blob/master/http/TUTORIAL.md)
+* [Thrift](https://github.com/benbooth493/bender/blob/master/thrift/TUTORIAL.md)
+* [HTTP](https://github.com/benbooth493/bender/blob/master/http/TUTORIAL.md)
 
 ## Documentation
 
-The package documentation is available on [godoc.org](http://godoc.org/github.com/pinterest/bender).
+The package documentation is available on [godoc.org](http://godoc.org/github.com/benbooth493/bender).
 The function and data structure documentation is also available there.
 
 ## Performance

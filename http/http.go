@@ -20,7 +20,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/pinterest/bender"
+	"github.com/benbooth493/bender"
 )
 
 type HttpBodyValidator func(request interface{}, body io.ReadCloser) error
