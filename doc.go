@@ -16,7 +16,7 @@ limitations under the License.
 
 /*
 Package bender makes it easy to build load testing applications for services using protocols like
-HTTP, Thrift, Protocol Buffers and many others.
+HTTP, Protocol Buffers and many others.
 
 Bender provides two different approaches to load testing. The first, LoadTestThroughput, gives the
 tester control over the throughput (QPS), but not over the concurrency (number of goroutines). The

@@ -2,13 +2,13 @@ Bender
 ======
 
 Bender makes it easy to build load testing applications for services using protocols like HTTP,
-Thrift, Protocol Buffers and many more. Bender provides a library of flexible, powerful primitives
+Protocol Buffers and many more. Bender provides a library of flexible, powerful primitives
 that can be combined (with plain Go code) to build load testers customized to any use case and that
 evolve with your service over time.
 
 Bender provides two different approaches to load testing. The first, LoadTestThroughput, gives the
 tester control over the throughput (QPS), but not over the concurrency. This one is very well
-suited for services that are open to the Internet, like web services, and even backend Thrift or
+suited for services that are open to the Internet, like web services, or
 Protocol Buffer services, since it will just keep sending requests, even if the service is
 struggling. The second approach, LoadTestConcurrency, gives the tester control over the concurrency,
 but not over the throughput. This approach is better suited to testing services that require lots of
@@ -23,12 +23,11 @@ library.
 
 The easiest way to get started with Bender is to use one of the tutorials:
 
-* [Thrift](https://github.com/pinterest/bender/blob/master/thrift/TUTORIAL.md)
-* [HTTP](https://github.com/pinterest/bender/blob/master/http/TUTORIAL.md)
+* [HTTP](https://github.com/benbooth493/bender/blob/master/http/TUTORIAL.md)
 
 ## Documentation
 
-The package documentation is available on [godoc.org](http://godoc.org/github.com/pinterest/bender).
+The package documentation is available on [godoc.org](http://godoc.org/github.com/benbooth493/bender).
 The function and data structure documentation is also available there.
 
 ## Performance
@@ -100,7 +99,7 @@ including a customizable histogram of latencies, an error rate and some other su
 Bender does provide a complete log of everything that happens during a load test, so you can use
 existing tools to graph any aspect of that data, but nothing in Bender makes that easy right now.
 
-Bender only provides helper functions for HTTP and Thrift currently, because that is all we use
+Bender only provides helper functions for HTTP currently, because that is all we use
 internally at Pinterest.
 
 The load testers we have written internally with Bender have a lot of common command line arguments,
@@ -114,7 +113,7 @@ JMeter provides a GUI to configure and run load tests, and can also be configure
 really not recommended by hand!) and run from the command line. JMeter uses the same approach as
 LoadTestConcurrency in Bender, which is not a good approach to load testing services (see the Bender
 docs and the Iago philosophy for more details on why that is). It isn't easy to extend JMeter to
-handle new protocols, so it doesn't have support for Thrift or Protobuf. It is relatively easy to
+handle new protocols, so it doesn't have support for Protobuf. It is relatively easy to
 extend other parts of JMeter by writing Java code, however, and the GUI makes it easy to plug all
 the pieces together.
 
@@ -152,5 +151,4 @@ limitations under the License.
 
 Bender includes open source from the following sources:
 
-* Apache Thrift Libraries. Copyright 2014 Apache Software Foundation. Licensed under the Apache License v2.0 (http://www.apache.org/licenses/).
 * Go Libraries. Copyright 2012 The Go Authors. Licensed under the BSD license (http://golang.org/LICENSE). 
