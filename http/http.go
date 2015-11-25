@@ -19,13 +19,12 @@ package http
 import (
 	"net/http"
 
-	//"github.com/benbooth493/bender"
-	"../../bender"
+	"github.com/benbooth493/bender"
 )
 
-type HttpValidator func(request interface{}, resp *http.Response) error
+type HttpValidator func(request interface{}, resp *http.Response, target interface{}) error
 
-func CreateHttpExecutor(tr *http.Transport, client *http.Client, httpValidator HttpValidator) bender.RequestExecutor {
+func CreateHttpExecutor(tr *http.Transport, client *http.Client, httpValidator HttpValidator, target interface{}) bender.RequestExecutor {
 	if tr == nil {
 		tr = &http.Transport{}
 		client = &http.Client{Transport: tr}
@@ -40,7 +39,7 @@ func CreateHttpExecutor(tr *http.Transport, client *http.Client, httpValidator H
 			return nil, err
 		}
 		defer resp.Body.Close()
-		err = httpValidator(request, resp)
+		err = httpValidator(request, resp, target)
 		if err != nil {
 			return nil, err
 		}
