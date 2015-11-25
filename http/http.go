@@ -17,10 +17,10 @@ limitations under the License.
 package http
 
 import (
-	"io"
 	"net/http"
 
-	"github.com/benbooth493/bender"
+	//"github.com/benbooth493/bender"
+	"../../bender"
 )
 
 type HttpValidator func(request interface{}, resp *http.Response) error
@@ -40,7 +40,7 @@ func CreateHttpExecutor(tr *http.Transport, client *http.Client, httpValidator H
 			return nil, err
 		}
 		defer resp.Body.Close()
-		err = bodyValidator(request, resp.Body)
+		err = httpValidator(request, resp)
 		if err != nil {
 			return nil, err
 		}
