@@ -17,15 +17,14 @@ limitations under the License.
 package http
 
 import (
-	"io"
 	"net/http"
 
 	"github.com/pinterest/bender"
 )
 
-type HttpBodyValidator func(request interface{}, body io.ReadCloser) error
+type HttpResponseValidator func(request interface{}, resp *http.Response) error
 
-func CreateHttpExecutor(tr *http.Transport, client *http.Client, bodyValidator HttpBodyValidator) bender.RequestExecutor {
+func CreateHttpExecutor(tr *http.Transport, client *http.Client, responseValidator HttpResponseValidator) bender.RequestExecutor {
 	if tr == nil {
 		tr = &http.Transport{}
 		client = &http.Client{Transport: tr}
@@ -39,8 +38,7 @@ func CreateHttpExecutor(tr *http.Transport, client *http.Client, bodyValidator H
 		if err != nil {
 			return nil, err
 		}
-		defer resp.Body.Close()
-		err = bodyValidator(request, resp.Body)
+		err = responseValidator(request, resp)
 		if err != nil {
 			return nil, err
 		}
