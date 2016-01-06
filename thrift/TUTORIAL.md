@@ -318,7 +318,7 @@ histogram using code like this:
 
 ```
 l := log.New(os.Stdout, "", log.LstdFlags)
-h := hist.NewHistogram(60000, 10000000)
+h := hist.NewHistogram(60000, 1000000)
 bender.Record(recorder, bender.NewLoggingRecorder(l), bender.NewHistogramRecorder(h))
 ```
 
