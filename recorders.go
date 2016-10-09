@@ -22,8 +22,10 @@ import (
 	"github.com/pinterest/bender/hist"
 )
 
+// A Recorder records a message.
 type Recorder func(interface{})
 
+// Record records messages from a channel using the given recorders.
 func Record(c chan interface{}, recorders ...Recorder) {
 	for msg := range c {
 		for _, recorder := range recorders {
@@ -36,12 +38,14 @@ func logMessage(l *log.Logger, msg interface{}) {
 	l.Printf("%+v", msg)
 }
 
+// NewLoggingRecorder creates a new log.Logger-based recorder.
 func NewLoggingRecorder(l *log.Logger) Recorder {
 	return func(msg interface{}) {
 		logMessage(l, msg)
 	}
 }
 
+// NewHistogramRecorder creates a new hist.Histogram-based recorder.
 func NewHistogramRecorder(h *hist.Histogram) Recorder {
 	return func(msg interface{}) {
 		switch msg := msg.(type) {
