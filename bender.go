@@ -22,8 +22,23 @@ import (
 	"time"
 )
 
+// An IntervalGenerator is a function that takes the current Unix epoch time
+// (in nanoseconds) and returns a non-negative time (also in nanoseconds)
+// until the next request should be sent. Bender provides functions to create
+// interval generators for uniform and exponential distributions, each of
+// which takes the target throughput (requests per second) and returns an
+// IntervalGenerator. Neither of the included generators makes use of the
+// function argument, but it is there for cases in which the simulated
+// intervals are time dependent (you want to simulate the daily traffice
+// variation of a web site, for example).
 type IntervalGenerator func(int64) int64
 
+// RequestExecutor is a function that takes the current Unix Epoch time (in
+// nanoseconds) and a *Request, sends the request to the service, waits for
+// the response, optionally validates it and returns an error or nil. This
+// function is timed by the load tester, so it should do as little else as
+// possible, and everything it does will be added to the reported service
+// latency.
 type RequestExecutor func(int64, interface{}) (interface{}, error)
 
 // StartEvent is sent once at the start of the load test.

@@ -25,9 +25,11 @@ import (
 	"github.com/pinterest/bender"
 )
 
-type ThriftClientExecutor func(interface{}, thrift.TTransport) (interface{}, error)
+// A ClientExecutor executes a Thrift request.
+type ClientExecutor func(interface{}, thrift.TTransport) (interface{}, error)
 
-func NewThriftRequestExec(tFac thrift.TTransportFactory, clientExec ThriftClientExecutor, timeout time.Duration, hosts ...string) bender.RequestExecutor {
+// NewThriftRequestExec creates a new Thrift-based RequestExecutor.
+func NewThriftRequestExec(tFac thrift.TTransportFactory, clientExec ClientExecutor, timeout time.Duration, hosts ...string) bender.RequestExecutor {
 	return func(_ int64, request interface{}) (interface{}, error) {
 		addr := hosts[rand.Intn(len(hosts))]
 		socket, err := thrift.NewTSocketTimeout(addr, timeout)
@@ -46,10 +48,11 @@ func NewThriftRequestExec(tFac thrift.TTransportFactory, clientExec ThriftClient
 	}
 }
 
+// DeserializeThriftMessage deserializes a Thrift-encoded byte array.
 func DeserializeThriftMessage(buf *bytes.Buffer, ts thrift.TStruct) (string, thrift.TMessageType, int32, error) {
 	transport := thrift.NewStreamTransportR(buf)
 	protocol := thrift.NewTBinaryProtocol(transport, false, false)
-	name, typeId, seqId, err := protocol.ReadMessageBegin()
+	name, typeID, seqID, err := protocol.ReadMessageBegin()
 	if err != nil {
 		return "", 0, 0, err
 	}
@@ -59,5 +62,5 @@ func DeserializeThriftMessage(buf *bytes.Buffer, ts thrift.TStruct) (string, thr
 		return "", 0, 0, err
 	}
 
-	return name, typeId, seqId, nil
+	return name, typeID, seqID, nil
 }

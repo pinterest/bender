@@ -22,9 +22,11 @@ import (
 	"github.com/pinterest/bender"
 )
 
-type HttpResponseValidator func(request interface{}, resp *http.Response) error
+// ResponseValidator validates an HTTP response.
+type ResponseValidator func(request interface{}, resp *http.Response) error
 
-func CreateHttpExecutor(tr *http.Transport, client *http.Client, responseValidator HttpResponseValidator) bender.RequestExecutor {
+// CreateExecutor creates an HTTP request executor.
+func CreateExecutor(tr *http.Transport, client *http.Client, responseValidator ResponseValidator) bender.RequestExecutor {
 	if tr == nil {
 		tr = &http.Transport{}
 		client = &http.Client{Transport: tr}

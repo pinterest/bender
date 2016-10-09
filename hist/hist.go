@@ -23,6 +23,7 @@ import (
 	"time"
 )
 
+// Histogram defines a histogram.
 type Histogram struct {
 	start  int
 	end    int
@@ -34,18 +35,22 @@ type Histogram struct {
 	values []int
 }
 
+// NewHistogram creates a new Histogram.
 func NewHistogram(max int, scale int) *Histogram {
 	return &Histogram{0, 0, scale, max, 0, 0, 0, make([]int, max+1)}
 }
 
+// Start starts the histogram with the given value.
 func (h *Histogram) Start(t int) {
 	h.start = t
 }
 
+// End ends the hisogram with the given value.
 func (h *Histogram) End(t int) {
 	h.end = t
 }
 
+// Add adds a new value to the histogram.
 func (h *Histogram) Add(v int) {
 	v = int(float64(v) / float64(h.scale))
 	if v < 1 {
@@ -59,11 +64,13 @@ func (h *Histogram) Add(v int) {
 	h.total += v
 }
 
+// AddError adds a new error value to the histogram.
 func (h *Histogram) AddError(v int) {
 	h.Add(v)
-	h.errCnt += 1
+	h.errCnt++
 }
 
+// Percentiles produces the values for the given percentiles.
 func (h *Histogram) Percentiles(percentiles ...float64) []int {
 	result := make([]int, len(percentiles))
 	if percentiles == nil || len(percentiles) == 0 {
@@ -73,27 +80,29 @@ func (h *Histogram) Percentiles(percentiles ...float64) []int {
 	sort.Sort(sort.Float64Slice(percentiles))
 
 	accum := 0
-	p_idx := int(math.Max(1.0, percentiles[0]*float64(h.n)))
+	idx := int(math.Max(1.0, percentiles[0]*float64(h.n)))
 	for i, j := 0, 0; i < len(percentiles) && j < len(h.values); j++ {
 		accum += h.values[j]
 
-		for accum >= p_idx {
+		for accum >= idx {
 			result[i] = j
 			i++
 			if i >= len(percentiles) {
 				break
 			}
-			p_idx = int(math.Max(1.0, percentiles[i]*float64(h.n)))
+			idx = int(math.Max(1.0, percentiles[i]*float64(h.n)))
 		}
 	}
 
 	return result
 }
 
+// Average returns the histogram's average value.
 func (h *Histogram) Average() float64 {
 	return float64(h.total) / float64(h.n)
 }
 
+// ErrorPercent returns the hisogram's error percentage.
 func (h *Histogram) ErrorPercent() float64 {
 	return float64(h.errCnt) / float64(h.n) * 100.0
 }

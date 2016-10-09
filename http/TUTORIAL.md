@@ -210,7 +210,7 @@ func bodyValidator(request interface{}, resp *http.Response) error {
 	return errors.New(fmt.Sprintf("Body (%s) is missing prefix 'hello: '", text))
 }
 
-exec := http.CreateHttpExecutor(nil, nil, bodyHandler)
+exec := http.CreateExecutor(nil, nil, bodyHandler)
 ```
 
 This validates that the response body has the echoed text (minus the suffix), and returns an error
@@ -324,7 +324,7 @@ func bodyValidator(request interface{}, resp *http.Response) error {
 func main() {
 	intervals := bender.ExponentialIntervalGenerator(10)
 	requests := SyntheticHttpRequests(100)
-	exec := bhttp.CreateHttpExecutor(nil, nil, bodyValidator)
+	exec := bhttp.CreateExecutor(nil, nil, bodyValidator)
 	recorder := make(chan interface{}, 100)
 
 	bender.LoadTestThroughput(intervals, requests, exec, recorder)

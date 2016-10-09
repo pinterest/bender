@@ -24,20 +24,20 @@ import (
 
 type Request struct{}
 
-func assertMessages(t *testing.T, cr chan interface{}, expected_msgs ...interface{}) {
-	for _, msg := range expected_msgs {
-		actual_msg, ok := <-cr
+func assertMessages(t *testing.T, cr chan interface{}, expected ...interface{}) {
+	for _, msg := range expected {
+		actual, ok := <-cr
 		if !ok {
 			t.Errorf("Expected a message (%s), but reached end of channel instead", msg)
 			return
 		}
 
-		if reflect.TypeOf(actual_msg) != reflect.TypeOf(msg) {
-			t.Errorf("Expected a message of type %s, but got a message of type %s instead", reflect.TypeOf(actual_msg), reflect.TypeOf(msg))
+		if reflect.TypeOf(actual) != reflect.TypeOf(msg) {
+			t.Errorf("Expected a message of type %s, but got a message of type %s instead", reflect.TypeOf(actual), reflect.TypeOf(msg))
 			return
 		}
 
-		switch m := actual_msg.(type) {
+		switch m := actual.(type) {
 		case *EndRequestEvent:
 			if m.Err != nil && msg.(*EndRequestEvent).Err == nil {
 				t.Errorf("Expected EndRequestEvent with no error (%+v), but got EndRequestEvent with an error (%+v)", msg, m)
