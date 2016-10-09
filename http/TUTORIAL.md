@@ -196,8 +196,8 @@ them to the service. We will use a helper function from Bender's http library to
 request:
 
 ```
-func bodyValidator(request interface{}, body io.ReadCloser) error {
-	bytes, err := ioutil.ReadAll(body)
+func bodyValidator(request interface{}, resp *http.Response) error {
+	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
@@ -305,8 +305,8 @@ func SyntheticHttpRequests(n int) chan interface{} {
 	return c
 }
 
-func bodyValidator(request interface{}, body io.ReadCloser) error {
-	bytes, err := ioutil.ReadAll(body)
+func bodyValidator(request interface{}, resp *http.Response) error {
+	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
