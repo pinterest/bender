@@ -46,7 +46,7 @@ mkdir -p src/$PKG/hellohttp/server
 
 Then create a file named `main.go` in that directory and add these lines to it:
 
-```
+```go
 package main
 
 import (
@@ -77,7 +77,7 @@ mkdir -p src/$PKG/hellohttp/client
 
 Then create a file named `main.go` in that directory and add these lines to it:
 
-```
+```go
 package main
 
 import (
@@ -166,7 +166,7 @@ been generated and Bender is ready to send the request, it pulls the next reques
 and spawns a goroutine to send the request to the server. This function creates a simple synthetic
 request generator:
 
-```
+```go
 func SyntheticHttpRequests(n int) chan interface{} {
     c := make(chan interface{}, 100)
     go func() {
@@ -195,7 +195,7 @@ them to the service. We will use a helper function from Bender's http library to
 (connection management, error handling, etc), so all we have to do is write code to send the
 request:
 
-```
+```go
 func bodyValidator(request interface{}, resp *http.Response) error {
 	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -222,7 +222,9 @@ The last thing we need is a channel that will output events as the load tester r
 us listen to the load testers progress and record stats. We want this channel to be buffered so that
 we can run somewhat independently of the load test without slowing it down:
 
-```recorder := make(chan interface{}, 128)```
+```go
+recorder := make(chan interface{}, 128)
+```
 
 The `LoadTestThroughput` function returns a channel on which it will send events for things like
 the start of the load test, how long it waits between requests, how much overage it is currently
@@ -239,7 +241,7 @@ error counts.
 You can combine recorders using the `Record` function, so you can both log events and manage a
 histogram using code like this:
 
-```
+```go
 l := log.New(os.Stdout, "", log.LstdFlags)
 h := hist.NewHistogram(60000, 10000000)
 bender.Record(recorder, bender.NewLoggingRecorder(l), bender.NewHistogramRecorder(h))
@@ -264,7 +266,7 @@ mkdir -p src/$PKG/hellobender
 
 Then create a file named `main.go` in that directory and add these lines to it:
 
-```
+```go
 package main
 
 import (
