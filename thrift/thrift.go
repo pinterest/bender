@@ -38,7 +38,7 @@ func NewThriftRequestExec(tFac thrift.TTransportFactory, clientExec ClientExecut
 		}
 		defer socket.Close()
 
-		transport := tFac.GetTransport(socket)
+		transport, err := tFac.GetTransport(socket)
 		if err := transport.Open(); err != nil {
 			return nil, err
 		}
