@@ -17,6 +17,7 @@ limitations under the License.
 package bender
 
 import (
+	"math"
 	"math/rand"
 	"time"
 )
@@ -36,7 +37,10 @@ func ExponentialIntervalGenerator(rate float64) IntervalGenerator {
 // UniformIntervalGenerator creates and IntervalGenerator that outputs 1/rate every time it is
 // called. Boring, right?
 func UniformIntervalGenerator(rate float64) IntervalGenerator {
-	irate := int64(rate / float64(time.Second))
+	var irate int64 = math.MaxInt64
+	if rate != 0.0 {
+		irate = int64(float64(time.Second) / rate)
+	}
 	return func(_ int64) int64 {
 		return irate
 	}

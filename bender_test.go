@@ -79,19 +79,19 @@ func errorExec(int64, interface{}) (interface{}, error) {
 
 func TestLoadTestThroughputNoRequests(t *testing.T) {
 	cr := make(chan interface{})
-	LoadTestThroughput(UniformIntervalGenerator(0), requests(), noOpExec, cr)
+	LoadTestThroughput(UniformIntervalGenerator(1e9), requests(), noOpExec, cr)
 	assertMessages(t, cr, &StartEvent{}, &EndEvent{})
 }
 
 func TestLoadTestThroughputOneSuccess(t *testing.T) {
 	cr := make(chan interface{})
-	LoadTestThroughput(UniformIntervalGenerator(0), requests(Request{}), noOpExec, cr)
+	LoadTestThroughput(UniformIntervalGenerator(1e9), requests(Request{}), noOpExec, cr)
 	assertMessages(t, cr, &StartEvent{}, &WaitEvent{}, &StartRequestEvent{}, &EndRequestEvent{}, &EndEvent{})
 }
 
 func TestLoadTestThroughputOneError(t *testing.T) {
 	cr := make(chan interface{})
-	LoadTestThroughput(UniformIntervalGenerator(0), requests(Request{}), errorExec, cr)
+	LoadTestThroughput(UniformIntervalGenerator(1e9), requests(Request{}), errorExec, cr)
 	assertMessages(t, cr, &StartEvent{}, &WaitEvent{}, &StartRequestEvent{}, &EndRequestEvent{Err: errors.New("foo")}, &EndEvent{})
 }
 
