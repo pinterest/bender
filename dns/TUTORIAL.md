@@ -198,7 +198,7 @@ request:
 ```go
 var responseIP = net.ParseIP("fd6c:1a5c:2b63::d8e9")
 
-func validator(_ interface{}, resp *dns.Msg) error {
+func validator(_, resp *dns.Msg) error {
 	if len(resp.Answer) != 1 {
 		return fmt.Errorf("response missing answer for query")
 	}
@@ -300,7 +300,7 @@ func SyntheticDNSRequests(n int) chan interface{} {
 	return c
 }
 
-func validator(_ interface{}, resp *dns.Msg) error {
+func validator(_, resp *dns.Msg) error {
 	if len(resp.Answer) != 1 {
 		return fmt.Errorf("response missing answer for query")
 	}
