@@ -109,7 +109,7 @@ func (h *Histogram) ErrorPercent() float64 {
 
 func (h *Histogram) String() string {
 	ps := h.Percentiles(0.0, 0.5, 0.9, 0.95, 0.99, 0.999, 0.9999, 1.0)
-	s := "Percentiles:\n" +
+	s := "Percentiles (%s):\n" +
 		" Min:     %d\n" +
 		" Median:  %d\n" +
 		" 90th:    %d\n" +
@@ -118,7 +118,7 @@ func (h *Histogram) String() string {
 		" 99.99th: %d\n" +
 		" Max:     %d\n" +
 		"Stats:\n" +
-		" Average: %f\n" +
+		" Average (%s): %f\n" +
 		" Total requests: %d\n" +
 		" Elapsed Time (sec): %.4f\n" +
 		" Average QPS: %.2f\n" +
@@ -126,6 +126,7 @@ func (h *Histogram) String() string {
 		" Percent errors: %.2f\n"
 	elapsedSecs := float64(h.end-h.start) / float64(time.Second)
 	averageQPS := float64(h.n) / elapsedSecs
-	return fmt.Sprintf(s, ps[0], ps[1], ps[2], ps[3], ps[4], ps[5], ps[6],
-		h.Average(), h.n, elapsedSecs, averageQPS, h.errCnt, h.ErrorPercent())
+	scale := time.Duration(h.scale) * time.Nanosecond
+	return fmt.Sprintf(s, scale.String(), ps[0], ps[1], ps[2], ps[3], ps[4], ps[5], ps[6],
+		scale.String(), h.Average(), h.n, elapsedSecs, averageQPS, h.errCnt, h.ErrorPercent())
 }
