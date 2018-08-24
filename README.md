@@ -26,6 +26,7 @@ The easiest way to get started with Bender is to use one of the tutorials:
 * [Thrift](https://github.com/pinterest/bender/blob/master/thrift/TUTORIAL.md)
 * [HTTP](https://github.com/pinterest/bender/blob/master/http/TUTORIAL.md)
 * [DNS](https://github.com/pinterest/bender/blob/master/dns/TUTORIAL.md)
+* [TFTP](https://github.com/pinterest/bender/blob/master/tftp/TUTORIAL.md)
 
 ## Documentation
 
@@ -86,7 +87,9 @@ http://www.nateware.com/linux-network-tuning-for-2013.html#.VBjahC5dVyE
 
 In addition, it helps to increase the open file limit with something like:
 
-```ulimit -n 100000```
+```
+ulimit -n 100000
+```
 
 ## What Is Missing
 
@@ -101,8 +104,8 @@ including a customizable histogram of latencies, an error rate and some other su
 Bender does provide a complete log of everything that happens during a load test, so you can use
 existing tools to graph any aspect of that data, but nothing in Bender makes that easy right now.
 
-Bender currently provides helper functions for HTTP, Thrift and DNS. We appreciate PR for other
-protocols.
+Bender currently provides helper functions for HTTP, Thrift, DNS and TFTP. We appreciate Pull
+Requests for other protocols.
 
 The load testers we have written internally with Bender have a lot of common command line arguments,
 but we haven't finalized a set to share as part of the library.
@@ -155,4 +158,5 @@ Bender includes open source from the following sources:
 
 * Apache Thrift Libraries. Copyright 2014 Apache Software Foundation. Licensed under the Apache License v2.0 (http://www.apache.org/licenses/).
 * Miek Gieben DNS library for Go. Licensed under the BSD license (https://github.com/miekg/dns/blob/master/COPYRIGHT)
-* Go Libraries. Copyright 2012 The Go Authors. Licensed under the BSD license (http://golang.org/LICENSE). 
+* Dmitri Popov TFTP library for Go. Licensed under the MIT license (https://github.com/pin/tftp/blob/master/LICENSE)
+* Go Libraries. Copyright 2012 The Go Authors. Licensed under the BSD license (http://golang.org/LICENSE).
