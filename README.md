@@ -139,7 +139,7 @@ The Grinder does have support for conveniently running distributed load tests.
 
 ## Copyright
 
-Copyright 2014-2016 Pinterest, Inc.
+Copyright 2014-2018 Pinterest, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
