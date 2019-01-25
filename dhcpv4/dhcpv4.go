@@ -76,10 +76,7 @@ func newSendFunc(client *async.Client) (sendFunc, error) {
 // assertMessageType extracts message type and checks if it matches expected
 func assertMessageType(d *dhcpv4.DHCPv4, mt dhcpv4.MessageType) error {
 	t := d.MessageType()
-	if t == nil {
-		return fmt.Errorf("unable to extract message type")
-	}
-	if *t != mt {
+	if t != mt {
 		return fmt.Errorf("invalid message type %s, want: %s", t.String(), mt.String())
 	}
 	return nil
