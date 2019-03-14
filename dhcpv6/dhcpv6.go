@@ -64,8 +64,8 @@ func send(client *async.Client, message dhcpv6.DHCPv6) (dhcpv6.DHCPv6, error) {
 
 // unpack extracts the relay inner message and asserts for the expected type,
 // returns a relay and an inner message
-func unpack(response dhcpv6.DHCPv6, messageType dhcpv6.MessageType) (*dhcpv6.DHCPv6Relay, dhcpv6.DHCPv6, error) {
-	relay, ok := response.(*dhcpv6.DHCPv6Relay)
+func unpack(response dhcpv6.DHCPv6, messageType dhcpv6.MessageType) (*dhcpv6.RelayMessage, *dhcpv6.Message, error) {
+	relay, ok := response.(*dhcpv6.RelayMessage)
 	if !ok {
 		return nil, nil, fmt.Errorf("invalid response type %T, want: *dhcpv6.DHCPv6Relay", response)
 	}
@@ -104,5 +104,5 @@ func relayRequestFromAdvertise(advertise dhcpv6.DHCPv6) (dhcpv6.DHCPv6, error) {
 	if err != nil {
 		return nil, err
 	}
-	return dhcpv6.EncapsulateRelay(req, dhcpv6.MessageTypeRelayForward, relay.LinkAddr(), relay.PeerAddr())
+	return dhcpv6.EncapsulateRelay(req, dhcpv6.MessageTypeRelayForward, relay.LinkAddr, relay.PeerAddr)
 }
