@@ -357,7 +357,6 @@ import (
 	"github.com/pinterest/bender/hist"
 	"fmt"
 	"time"
-        "strconv"
 	"$PKG/hellothrift/hello"
 )
 
@@ -366,7 +365,7 @@ func SyntheticRequests(n int) chan interface{} {
 	go func() {
 		for i := 0; i < n; i++ {
 			request := hello.NewHelloRequest()
-			request.Message = "hello " + strconv.Itoa(i)
+			request.Message = "hello " + i
 			c <- request
 		}
 		close(c)
