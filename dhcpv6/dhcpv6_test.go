@@ -13,7 +13,7 @@ func validator(_, _ dhcpv6.DHCPv6) error {
 func TestExecutorTypeCheck(t *testing.T) {
 	executor := CreateExecutor(nil, validator)
 	_, err := executor(0, 42)
-	if err == nil || err.Error() != "invalid request type int, want: dhcpv6.DHCPv6" {
+	if err == nil || err.Error() != "invalid request type int, want: *dhcpv6.Message" {
 		t.Errorf("Expected executor to fail with invalid request type error, got (%s)", err)
 	}
 }
