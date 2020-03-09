@@ -18,9 +18,9 @@ type ResponseValidator func(request, response dhcpv6.DHCPv6) error
 // CreateExecutor creates a new DHCPv6 RequestExecutor.
 func CreateExecutor(client *async.Client, validator ResponseValidator) bender.RequestExecutor {
 	return func(_ int64, request interface{}) (interface{}, error) {
-		solicit, ok := request.(dhcpv6.DHCPv6)
+		solicit, ok := request.(*dhcpv6.Message)
 		if !ok {
-			return nil, fmt.Errorf("invalid request type %T, want: dhcpv6.DHCPv6", request)
+			return nil, fmt.Errorf("invalid request type %T, want: *dhcpv6.Message", request)
 		}
 		sol, err := relaySolicit(solicit)
 		if err != nil {
@@ -80,12 +80,12 @@ func unpack(response dhcpv6.DHCPv6, messageType dhcpv6.MessageType) (*dhcpv6.Rel
 }
 
 // relaySolicit encapsulates a solicit message in relay
-func relaySolicit(solicit dhcpv6.DHCPv6) (dhcpv6.DHCPv6, error) {
-	cid := solicit.GetOneOption(dhcpv6.OptionClientID)
-	if cid == nil {
-		return nil, errors.New("client id cannot be nil")
+func relaySolicit(solicit *dhcpv6.Message) (dhcpv6.DHCPv6, error) {
+	duid := solicit.Options.ClientID()
+	if duid == nil {
+		return nil, errors.New("duid cannot be nil")
 	}
-	mac := cid.(*dhcpv6.OptClientId).Cid.LinkLayerAddr
+	mac := duid.LinkLayerAddr
 	peer, err := eui64.ParseMAC(net.ParseIP("fe80::"), mac)
 	if err != nil {
 		return nil, err
