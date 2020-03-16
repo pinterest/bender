@@ -1,0 +1,33 @@
+---
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go: ['1.10']
+    steps:
+      - uses: actions/checkout@v1.0.0
+      - uses: actions/setup-go@v1
+        with:
+          go-version: ${{ matrix.go }}
+      - run: |
+          go get -d -v ./...
+          go get -u golang.org/x/lint/golint
+      - run: go vet -x ./...
+      - name: Run golint
+        run: |
+          # https://github.com/actions/setup-go/issues/14
+          export PATH=$PATH:$(go env GOPATH)/bin
+          golint
+      - run: go test -v
