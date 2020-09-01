@@ -8,7 +8,7 @@ import (
 
 	"github.com/insomniacslk/dhcp/dhcpv6"
 	"github.com/insomniacslk/dhcp/dhcpv6/async"
-	"github.com/mdlayher/eui64"
+	"github.com/mdlayher/netx/eui64"
 	"github.com/pinterest/bender"
 )
 
