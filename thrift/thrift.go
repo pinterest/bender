@@ -18,6 +18,7 @@ package thrift
 
 import (
 	"bytes"
+	"context"
 	"math/rand"
 	"time"
 
@@ -32,7 +33,7 @@ type ClientExecutor func(interface{}, thrift.TTransport) (interface{}, error)
 func NewThriftRequestExec(tFac thrift.TTransportFactory, clientExec ClientExecutor, timeout time.Duration, hosts ...string) bender.RequestExecutor {
 	return func(_ int64, request interface{}) (interface{}, error) {
 		addr := hosts[rand.Intn(len(hosts))]
-		socket, err := thrift.NewTSocketTimeout(addr, timeout)
+		socket, err := thrift.NewTSocketTimeout(addr, timeout, timeout)
 		if err != nil {
 			return nil, err
 		}
@@ -52,12 +53,12 @@ func NewThriftRequestExec(tFac thrift.TTransportFactory, clientExec ClientExecut
 func DeserializeThriftMessage(buf *bytes.Buffer, ts thrift.TStruct) (string, thrift.TMessageType, int32, error) {
 	transport := thrift.NewStreamTransportR(buf)
 	protocol := thrift.NewTBinaryProtocol(transport, false, false)
-	name, typeID, seqID, err := protocol.ReadMessageBegin()
+	name, typeID, seqID, err := protocol.ReadMessageBegin(context.Background())
 	if err != nil {
 		return "", 0, 0, err
 	}
 
-	err = ts.Read(protocol)
+	err = ts.Read(context.Background(), protocol)
 	if err != nil {
 		return "", 0, 0, err
 	}
