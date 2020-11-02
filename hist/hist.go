@@ -113,6 +113,7 @@ func (h *Histogram) String() string {
 		" Min:     %d\n" +
 		" Median:  %d\n" +
 		" 90th:    %d\n" +
+		" 95th:    %d\n" +
 		" 99th:    %d\n" +
 		" 99.9th:  %d\n" +
 		" 99.99th: %d\n" +
@@ -127,6 +128,6 @@ func (h *Histogram) String() string {
 	elapsedSecs := float64(h.end-h.start) / float64(time.Second)
 	averageQPS := float64(h.n) / elapsedSecs
 	scale := time.Duration(h.scale) * time.Nanosecond
-	return fmt.Sprintf(s, scale.String(), ps[0], ps[1], ps[2], ps[3], ps[4], ps[5], ps[6],
+	return fmt.Sprintf(s, scale.String(), ps[0], ps[1], ps[2], ps[3], ps[4], ps[5], ps[6], ps[7],
 		scale.String(), h.Average(), h.n, elapsedSecs, averageQPS, h.errCnt, h.ErrorPercent())
 }

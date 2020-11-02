@@ -17,6 +17,7 @@ limitations under the License.
 package hist
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -72,5 +73,16 @@ func TestErrorCountAndRate(t *testing.T) {
 
 	if h.ErrorPercent() != 100.0 {
 		t.Errorf("Actual(%f) != Expected(%f)", h.ErrorPercent(), 100.0)
+	}
+}
+
+func TestString(t *testing.T) {
+	h := NewHistogram(100, 1)
+	for i := 1; i <= 100; i++ {
+		h.Add(i)
+	}
+	ps := h.String()
+	if !strings.Contains(ps, "95th:    95") || !strings.Contains(ps, "99th:    99") || !strings.Contains(ps, "Max:     100") {
+		t.Error("Percentiles are not as expected")
 	}
 }
