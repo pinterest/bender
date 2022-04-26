@@ -357,7 +357,7 @@ import (
 	"github.com/pinterest/bender/hist"
 	"fmt"
 	"time"
-        "strconv"
+	"strconv"
 	"$PKG/hellothrift/hello"
 )
 
@@ -383,7 +383,11 @@ func HelloExecutor(request interface{}, transport thrift.TTransport) (interface{
 func main() {
 	intervals := bender.ExponentialIntervalGenerator(10.0)
 	requests := SyntheticRequests(10)
-	exec := bthrift.NewThriftRequestExec(thrift.NewTFramedTransportFactory(thrift.NewTTransportFactory()), HelloExecutor, 10 * time.Second, "localhost:3636")
+	cfg := thrift.TConfiguration{
+		ConnectTimeout: 10 * time.Second,
+		SocketTimeout:  10 * time.Second,
+	}
+	exec := bthrift.NewThriftRequestExec(thrift.NewTFramedTransportFactoryConf(thrift.NewTTransportFactory(), cfg), HelloExecutor, cfg, "localhost:3636")
 	recorder := make(chan interface{}, 128)
 	bender.LoadTestThroughput(intervals, requests, exec, recorder)
 	l := log.New(os.Stdout, "", log.LstdFlags)
