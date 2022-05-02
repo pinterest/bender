@@ -15,15 +15,14 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go: ['1.10']
+        go: ['1.17']
     steps:
       - uses: actions/checkout@v1.0.0
       - uses: actions/setup-go@v1
         with:
           go-version: ${{ matrix.go }}
       - run: |
-          go get -d -v ./...
-          go get -u golang.org/x/lint/golint
+          go install golang.org/x/lint/golint@latest
       - run: go vet -x ./...
       - name: Run golint
         run: |
