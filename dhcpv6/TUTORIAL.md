@@ -235,7 +235,7 @@ func main() {
 	if err != nil {
 		log.Fatalln("Error resolving UDP:", err)
 	}
-  // We need to manually set the local address since we're using Relay port
+	// We need to manually set the local address since we're using Relay port
 	ip, err := getGlobalAddr("eth0")
 	if err != nil {
 		log.Fatalln("Error getting address:", err)

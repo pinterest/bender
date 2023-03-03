@@ -81,11 +81,10 @@ func unpack(response dhcpv6.DHCPv6, messageType dhcpv6.MessageType) (*dhcpv6.Rel
 
 // relaySolicit encapsulates a solicit message in relay
 func relaySolicit(solicit *dhcpv6.Message) (dhcpv6.DHCPv6, error) {
-	duid := solicit.Options.ClientID()
-	if duid == nil {
-		return nil, errors.New("duid cannot be nil")
+	mac, err := dhcpv6.ExtractMAC(solicit)
+	if err != nil {
+		return nil, err
 	}
-	mac := duid.LinkLayerAddr
 	peer, err := eui64.ParseMAC(net.ParseIP("fe80::"), mac)
 	if err != nil {
 		return nil, err
