@@ -174,7 +174,7 @@ import (
 	"time"
 
 	"github.com/insomniacslk/dhcp/dhcpv4"
-	"github.com/insomniacslk/dhcp/dhcpv4/async"
+	"github.com/insomniacslk/dhcp/dhcpv4/nclient4"
 	"github.com/insomniacslk/dhcp/iana"
 	"github.com/pinterest/bender"
 	bdhcpv4 "github.com/pinterest/bender/dhcpv4"
@@ -236,27 +236,16 @@ func main() {
 	if err != nil {
 		log.Fatalln("Error getting address:", err)
 	}
-	client := async.NewClient()
-	client.LocalAddr = &net.UDPAddr{IP: ip, Port: async.DefaultServerPort, Zone: ""}
-	client.RemoteAddr = addr
-
-	err = client.Open(100)
+	client, err := nclient4.New("eth0", nclient4.WithServerAddr(addr))
 	if err != nil {
 		log.Fatalln("Error opening client:", err)
 	}
 	defer client.Close()
 
-	// Subscribe to client errors channel
-	go func() {
-		for err := range client.Errors() {
-			log.Println("Client error:", err)
-		}
-	}()
-
 	// Load test
 	intervals := bender.ExponentialIntervalGenerator(10)
 	requests := SyntheticDHCPv4Requests(100)
-	exec, err := bdhcpv4.CreateExecutor(client, validator)
+	exec, err := bdhcpv4.CreateExecutor(client, ip, validator)
 	if err != nil {
 		log.Fatalln("Error creating executor:", err)
 	}
