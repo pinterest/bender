@@ -15,6 +15,8 @@ require (
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/josharian/native v1.1.0 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
+	github.com/mdlayher/ethernet v0.0.0-20190606142754-0394541c37b7 // indirect
+	github.com/mdlayher/raw v0.0.0-20191009151244-50f2db8cc065 // indirect
 	github.com/pierrec/lz4/v4 v4.1.14 // indirect
 	github.com/smartystreets/assertions v1.13.0 // indirect
 	github.com/u-root/uio v0.0.0-20230220225925-ffce2a382923 // indirect
